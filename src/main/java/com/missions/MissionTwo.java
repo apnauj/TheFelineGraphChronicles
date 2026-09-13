@@ -2,37 +2,35 @@ package main.java.com.missions;
 
 import main.java.com.structures.Djikstra;
 
-import java.util.Arrays;
 import java.util.Scanner;
 
 public class MissionTwo {
-    static void main() {
+    public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        int T = Integer.parseInt(sc.nextLine());
-        int N, C;
-        int[] NCSD;
-        for (int i = 0; i < T; i++) {
-            NCSD = Arrays.stream(sc.nextLine().trim().split("\\s+"))
-                    .mapToInt(Integer::parseInt)
-                    .toArray();
-            N = NCSD[0];
+
+        int T = sc.nextInt();
+
+        for (int i = 1; i <= T; i++) {
+            int N = sc.nextInt();
+            int C = sc.nextInt();
+            int S = sc.nextInt();
+            int D = sc.nextInt();
+
             Djikstra d = new Djikstra(N);
-            C = NCSD[1];
-            int A, B, W;
-            int[] ABW;
+
             for (int j = 0; j < C; j++) {
-                ABW = Arrays.stream(sc.nextLine().trim().split("\\s+"))
-                        .mapToInt(Integer::parseInt)
-                        .toArray();
-                A = ABW[0];
-                B = ABW[1];
-                W = ABW[2];
+                int A = sc.nextInt();
+                int B = sc.nextInt();
+                int W = sc.nextInt();
                 d.addEdge(A, B, W);
             }
-            if(d.dijkstra(NCSD[2], NCSD[3]) != Integer.MAX_VALUE){
-                System.out.printf("Case #%d: %d\n", (i+1), d.dijkstra(NCSD[2], NCSD[3]));
+
+            int dist = d.dijkstra(S, D);
+
+            if (dist != Integer.MAX_VALUE) {
+                System.out.printf("Case #%d: %d%n", i, dist);
             } else {
-                System.out.printf("Case #%d: Nina is very sad\n", (i+1));
+                System.out.printf("Case #%d: Nina is very sad%n", i);
             }
         }
     }
