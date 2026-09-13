@@ -44,42 +44,49 @@ public class MissionOne {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        // Filas, Columnas, Número de Filas con Bombas
-        int R, C, numberOfRowsWithBombs;
+        // Lectura anticipada: el primer caso se lee antes del while,
+        // y cada vuelta termina leyendo el encabezado del siguiente.
+        int R = sc.nextInt();
+        int C = sc.nextInt();
+        int t = 1;
 
-        R = Integer.parseInt(sc.nextLine());
-        C = Integer.parseInt(sc.nextLine());
-        numberOfRowsWithBombs = Integer.parseInt(sc.nextLine());
+        while (R != 0 || C != 0) {
 
-        // Bombas guardadas como ÍNDICES LINEALES en un HashSet -> contains() en O(1)
-        Set<Integer> bombs = new HashSet<>();
+            int numberOfRowsWithBombs = sc.nextInt();
 
-        int rowNumber, numberOfBombs, col;
+            // Bombas guardadas como ÍNDICES LINEALES en un HashSet -> contains() en O(1)
+            Set<Integer> bombs = new HashSet<>();
 
-        for (int i = 0; i < numberOfRowsWithBombs; i++) {
-            rowNumber = Integer.parseInt(sc.nextLine());
-            numberOfBombs = Integer.parseInt(sc.nextLine());
-            for (int j = 0; j < numberOfBombs; j++) {
-                col = Integer.parseInt(sc.nextLine());
-                // Única conversión (fila, columna) -> índice lineal de todo el programa.
-                // Si el input ya te da índices lineales, cambia esto por: bombs.add(col);
-                bombs.add(rowNumber * C + col);
+            for (int i = 0; i < numberOfRowsWithBombs; i++) {
+                int rowNumber = sc.nextInt();
+                int numberOfBombs = sc.nextInt();
+                for (int j = 0; j < numberOfBombs; j++) {
+                    // Única conversión (fila, columna) -> índice lineal de todo el programa.
+                    bombs.add(rowNumber * C + sc.nextInt());
+                }
             }
+
+            // Grafo de la cuadrícula, ya sin las bombas
+            List<List<Integer>> adj = adjList(R, C, bombs);
+
+            int rowStart = sc.nextInt(), colStart = sc.nextInt();
+            int rowEnd   = sc.nextInt(), colEnd   = sc.nextInt();
+
+            int start = rowStart * C + colStart;
+            int end   = rowEnd   * C + colEnd;
+
+            int bfs = BFS.bfs(adj, start, end);
+            int dfs = DFS.dfs(adj, start, end);
+
+            if (bfs == -1 || dfs == -1) {
+                System.out.printf("Case #%d: Nina is unreachable%n", t);
+            } else {
+                System.out.printf("Case #%d: BFS <%d> DFS <%d>%n", t, bfs, dfs);
+            }
+
+            t++;
+            R = sc.nextInt();   // encabezado del siguiente caso (o el 0 0 final)
+            C = sc.nextInt();
         }
-
-        // Grafo de la cuadrícula, ya sin las bombas
-        List<List<Integer>> adj = adjList(R, C, bombs);
-
-        int rowStart, colStart, rowEnd, colEnd;
-        rowStart = Integer.parseInt(sc.nextLine());
-        colStart = Integer.parseInt(sc.nextLine());
-        rowEnd = Integer.parseInt(sc.nextLine());
-        colEnd = Integer.parseInt(sc.nextLine());
-
-        int start = rowStart * C + colStart;
-        int end = rowEnd * C + colEnd;
-
-        System.out.println(BFS.bfs(adj, start, end));
-        System.out.println(DFS.dfs(adj, start, end));
     }
 }
