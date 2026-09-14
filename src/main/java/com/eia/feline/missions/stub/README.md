@@ -1,5 +1,8 @@
 # Andamiaje temporal
 
+> Guia completa de integracion: [`INTEGRACION.md`](../../../../../../../../INTEGRACION.md)
+> en la raiz del repositorio.
+
 Este paquete existe SOLO para que la interfaz grafica de las Misiones 3 y 4 se
 pueda construir y demostrar mientras otro integrante escribe los algoritmos
 definitivos.

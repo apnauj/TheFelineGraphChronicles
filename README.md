@@ -82,6 +82,8 @@ Los dos contratos que sostienen todo:
 | 3 — El botin de churun | Floyd-Warshall y Bellman-Ford | **andamiaje temporal** |
 | 4 — Reconectar la red | Kruskal con union-find | **andamiaje temporal** |
 
+**Para enchufar las Misiones 3 y 4 definitivas: ver [`INTEGRACION.md`](INTEGRACION.md).**
+
 Las Misiones 3 y 4 funcionan de punta a punta y producen la salida correcta del
 enunciado, pero sus algoritmos viven en `missions/stub/` y son provisionales: se
 escribieron para poder construir y demostrar la interfaz mientras otro integrante
