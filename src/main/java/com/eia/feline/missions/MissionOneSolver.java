@@ -98,8 +98,8 @@ public final class MissionOneSolver implements MissionSolver<MissionOneSolver.Ca
             int end = endRow * cols + endCol;
 
             GridGraph grid = GridGraph.of(rows, cols, bomb);
-            SearchResult bfs = BFS.search(grid, start, end);
-            SearchResult dfs = DFS.search(grid, start, end);
+            SearchResult bfs = BFS.search(grid.adjacency(), start, end);
+            SearchResult dfs = DFS.search(grid.adjacency(), start, end);
 
             // Una celda con bomba aisla al nodo, asi que BFS ya devuelve -1 en casi
             // todos los casos. La excepcion es start == end sobre una bomba, donde la

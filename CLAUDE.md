@@ -48,7 +48,7 @@ Three layers, and the dependency arrow only ever points one way: `ui → mission
 
 ```
 algo/       pure algorithms. No JavaFX, Swing or AWT import — enforced by AlgoPurityTest.
-  graph/    Adjacency (CSR read interface) · WeightedGraph · EdgeList
+  graph/    WeightedGraph (List<List<Edge>>) · EdgeList (List<Edge>)
   grid/     GridGraph — the Mission 1 board as a graph
   search/   BFS · DFS · SearchResult
   sp/       Dijkstra · ShortestPathResult
@@ -84,13 +84,11 @@ public record CaseResult<P>(int index, String outputLine, P payload) {}
 reformats it, so the auto-compared text is produced in exactly one place. `payload` is the structured
 state the drawing needs. Adding a mission means adding a solver and a payload record, not touching the UI.
 
-**`Adjacency`** — the CSR read interface. BFS and DFS take `Adjacency`, not a concrete class, so the same
-code runs on the Mission 1 grid and on hand-built test graphs:
+**The adjacency list.** BFS and DFS take a plain `List<List<Integer>>`, so the same code runs on the
+Mission 1 grid (via `GridGraph.adjacency()`) and on any hand-built test graph:
 
 ```java
-for (int e = g.adjStart(v); e < g.adjEnd(v); e++) {
-    int neighbour = g.adjTarget(e);
-}
+for (int nb : adj.get(node)) { ... }
 ```
 
 ## Invariants that are easy to break
@@ -127,17 +125,20 @@ which names both the offending token and its position, and use the range-checked
 `nextInt(what, low, high)` so out-of-range node ids are reported instead of crashing deep inside an
 algorithm.
 
-## Why CSR instead of `List<List<Integer>>`
+## Graph representation: plain `List<List<Integer>>`
 
-Measured at the statement's limit (1000×1000 = 10^6 cells): **144 MB vs 20 MB**, and a full BFS in
-**66 ms vs 36 ms**. Note this is *not* "the old version doesn't start" — 144 MB fits a default heap
-fine. It is 7× the memory and ~2× the time, because each neighbour costs three pointer hops
-(`ArrayList` → `Object[]` → `Integer`) plus cache misses, plus GC pressure from 5M objects. It only
-becomes a hard failure under a constrained heap: list-of-lists dies below ~192 MB, CSR survives at
-48 MB. Don't claim it OOMs on default settings — it doesn't.
+**Do not "optimise" this into a flat-array / CSR structure.** It was tried and deliberately reverted.
 
-`GridGraphTest` keeps the original list-of-lists construction as a reference and asserts the CSR build
-matches it neighbour for neighbour, in order.
+Measured at the statement's limit (1000×1000 = 10^6 cells), CSR wins on paper — 20 MB vs 144 MB, BFS
+in 36 ms vs 66 ms. It was still rejected: 144 MB fits a default heap without trouble, so nothing
+actually breaks, and this is a graded project where three people must defend every line in an oral
+exam. Readability beat a 7× memory win that the problem size never demanded.
+
+The one real trade-off: under a constrained heap, list-of-lists dies below ~192 MB where CSR survived
+at 48 MB. Only revisit if something forces a small `-Xmx`.
+
+`GridGraphTest` asserts the adjacency's properties directly — neighbour order, bombs isolated,
+symmetry, one-step neighbours — over fixed cases and 40 random grids.
 
 ## Conventions
 

@@ -1,8 +1,7 @@
 package com.eia.feline.algo.search;
 
-import com.eia.feline.algo.graph.Adjacency;
-
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * DFS ITERATIVO con pila explicita. Devuelve la longitud del camino que encontro
@@ -31,8 +30,8 @@ public final class DFS {
 
     private DFS() {}
 
-    public static SearchResult search(Adjacency g, int start, int end) {
-        int n = g.size();
+    public static SearchResult search(List<List<Integer>> adj, int start, int end) {
+        int n = adj.size();
 
         boolean[] visited = new boolean[n];
         int[] distance = new int[n];
@@ -44,13 +43,15 @@ public final class DFS {
         int seen = 0;
 
         // Cota de la pila: cada arista puede empujar su destino una vez, mas el origen.
-        int capacity = g.edgeCount() + 1;
-        int[] stack = new int[capacity];   // el nodo pendiente
-        int[] from = new int[capacity];    // quien lo empujo, en la misma posicion
+        int edges = 0;
+        for (List<Integer> neighbours : adj) edges += neighbours.size();
+
+        int[] stack = new int[edges + 1];   // el nodo pendiente
+        int[] from = new int[edges + 1];    // quien lo empujo, en la misma posicion
         int top = 0;
 
         stack[top] = start;
-        from[top] = -1;                    // el origen no tiene padre
+        from[top] = -1;                     // el origen no tiene padre
         top++;
 
         while (top > 0) {
@@ -58,7 +59,7 @@ public final class DFS {
             int node = stack[top];
             int p = from[top];
 
-            if (visited[node]) continue;   // duplicado: otra rama ya lo proceso
+            if (visited[node]) continue;    // duplicado: otra rama ya lo proceso
             visited[node] = true;
             distance[node] = (p == -1) ? 0 : distance[p] + 1;
             parent[node] = p;
@@ -68,8 +69,7 @@ public final class DFS {
                 return new SearchResult(distance, parent, order, seen);
             }
 
-            for (int e = g.adjStart(node); e < g.adjEnd(node); e++) {
-                int nb = g.adjTarget(e);
+            for (int nb : adj.get(node)) {
                 if (!visited[nb]) {
                     stack[top] = nb;
                     from[top] = node;
@@ -82,7 +82,7 @@ public final class DFS {
     }
 
     /** Forma escalar historica: solo la longitud del camino hallado. */
-    public static int dfs(Adjacency g, int start, int end) {
-        return search(g, start, end).distanceTo(end);
+    public static int dfs(List<List<Integer>> adj, int start, int end) {
+        return search(adj, start, end).distanceTo(end);
     }
 }

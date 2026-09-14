@@ -7,7 +7,7 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 
 /**
- * Dijkstra con cola de prioridad (min-heap) sobre un grafo en formato CSR.
+ * Dijkstra con cola de prioridad (min-heap) sobre una lista de adyacencia.
  *
  * POR QUE DIJKSTRA EN LA MISION 2: los pesos son no negativos, y esa es
  * exactamente la condicion que lo hace correcto. Con pesos no negativos, cuando
@@ -62,9 +62,9 @@ public final class Dijkstra {
             // RELAJACION de aristas. dist[u] es finito aqui: u salio del heap, y al
             // heap solo entran nodos que ya recibieron un costo real. Por eso la
             // suma de abajo nunca toca el centinela.
-            for (int e = g.adjStart(u); e < g.adjEnd(u); e++) {
-                int v = g.adjTarget(e);
-                long candidate = dist[u] + g.weight(e);
+            for (WeightedGraph.Edge e : g.neighbours(u)) {
+                int v = e.target();
+                long candidate = dist[u] + e.weight();
                 if (candidate < dist[v]) {
                     dist[v] = candidate;
                     parent[v] = u;

@@ -109,10 +109,9 @@ class MissionTwoSolverTest {
     void unreachableSentinelIsNeverUsedInArithmetic() {
         // Dos componentes separadas: 0-1 y 2-3. Desde 0 no se llega a 2 ni a 3, y sus
         // distancias deben quedar EXACTAMENTE en el centinela, sin desbordar.
-        WeightedGraph g = new WeightedGraph.Builder(4, 4)
+        WeightedGraph g = new WeightedGraph(4)
                 .addUndirected(0, 1, 10)
-                .addUndirected(2, 3, 10)
-                .build();
+                .addUndirected(2, 3, 10);
         ShortestPathResult sp = Dijkstra.run(g, 0);
 
         assertEquals(Dijkstra.UNREACHABLE, sp.costTo(2));
@@ -124,11 +123,10 @@ class MissionTwoSolverTest {
     @Test
     @DisplayName("Los nodos se resuelven en orden de costo creciente")
     void settleOrderIsByIncreasingCost() {
-        WeightedGraph g = new WeightedGraph.Builder(4, 6)
+        WeightedGraph g = new WeightedGraph(4)
                 .addUndirected(0, 1, 5)
                 .addUndirected(0, 2, 1)
-                .addUndirected(2, 3, 1)
-                .build();
+                .addUndirected(2, 3, 1);
         ShortestPathResult sp = Dijkstra.run(g, 0);
 
         assertArrayEquals(new int[]{ 0, 2, 3, 1 }, sp.settled(),

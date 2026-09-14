@@ -11,64 +11,29 @@ import java.util.Random;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * La estructura CSR reemplazo a una List<List<Integer>> por razones de memoria.
- * Estas pruebas fijan que el reemplazo sea equivalente: mismos vecinos y, sobre
- * todo, EN EL MISMO ORDEN, porque de ese orden depende que el DFS sea determinista.
+ * La lista de adyacencia de la cuadricula tiene que cumplir tres cosas, y de la
+ * tercera depende que el DFS sea determinista y por tanto calificable.
  */
 class GridGraphTest {
 
-    /** La construccion original, conservada aqui como referencia contra la cual comparar. */
-    private static List<List<Integer>> referenceAdjacency(int R, int C, boolean[] bomb) {
-        List<List<Integer>> adj = new ArrayList<>();
-        for (int i = 0; i < R * C; i++) adj.add(new ArrayList<>());
-
-        for (int i = 0; i < R * C; i++) {
-            if (bomb[i]) continue;
-            int r = i / C, c = i % C;
-            if (c < C - 1 && !bomb[i + 1]) adj.get(i).add(i + 1); // right
-            if (c > 0     && !bomb[i - 1]) adj.get(i).add(i - 1); // left
-            if (r < R - 1 && !bomb[i + C]) adj.get(i).add(i + C); // down
-            if (r > 0     && !bomb[i - C]) adj.get(i).add(i - C); // up
-        }
-        return adj;
-    }
-
-    private static List<Integer> neighboursOf(GridGraph g, int v) {
-        List<Integer> out = new ArrayList<>();
-        for (int e = g.adjStart(v); e < g.adjEnd(v); e++) out.add(g.adjTarget(e));
-        return out;
-    }
-
-    @Test
-    @DisplayName("CSR coincide con la lista de listas original, vecino por vecino y en orden")
-    void csrMatchesTheOriginalAdjacencyList() {
-        Random rnd = new Random(20260913L);
-        for (int trial = 0; trial < 40; trial++) {
-            int R = 1 + rnd.nextInt(9);
-            int C = 1 + rnd.nextInt(9);
-            boolean[] bomb = new boolean[R * C];
-            for (int i = 0; i < bomb.length; i++) bomb[i] = rnd.nextInt(4) == 0;
-
-            GridGraph g = GridGraph.of(R, C, bomb);
-            List<List<Integer>> reference = referenceAdjacency(R, C, bomb);
-
-            for (int v = 0; v < R * C; v++) {
-                assertEquals(reference.get(v), neighboursOf(g, v),
-                        "difieren los vecinos de la celda " + v + " en una cuadricula " + R + "x" + C);
-            }
-            int totalArcs = reference.stream().mapToInt(List::size).sum();
-            assertEquals(totalArcs, g.edgeCount());
-        }
-    }
-
     @Test
     @DisplayName("El bloque de vecinos se guarda como right, left, down, up")
-    void neighbourBlockIsStoredInReverseOfTheVisitOrder() {
+    void neighbourOrderIsTheReverseOfTheVisitOrder() {
         // Centro de una 3x3 limpia: tiene los cuatro vecinos.
         GridGraph g = GridGraph.of(3, 3, new boolean[9]);
-        assertEquals(List.of(5, 3, 7, 1), neighboursOf(g, 4),
+        assertEquals(List.of(5, 3, 7, 1), g.adjacency().get(4),
                 "guardar right,left,down,up es lo que hace que la pila LIFO del DFS "
                         + "salga en orden up,down,left,right");
+    }
+
+    @Test
+    @DisplayName("En los bordes solo aparecen los vecinos que existen, en el mismo orden relativo")
+    void bordersKeepTheRelativeOrder() {
+        GridGraph g = GridGraph.of(3, 3, new boolean[9]);
+        assertEquals(List.of(1, 3), g.adjacency().get(0), "esquina superior izquierda: right, down");
+        // La celda 1 es (0,1): right = 2, left = 0, down = 1 + cols = 4.
+        assertEquals(List.of(2, 0, 4), g.adjacency().get(1), "borde superior: right, left, down");
+        assertEquals(List.of(7, 5), g.adjacency().get(8), "esquina inferior derecha: left, up");
     }
 
     @Test
@@ -78,12 +43,45 @@ class GridGraphTest {
         bomb[4] = true;                                  // el centro
         GridGraph g = GridGraph.of(3, 3, bomb);
 
-        assertTrue(neighboursOf(g, 4).isEmpty(), "una bomba no tiene salidas");
+        assertTrue(g.adjacency().get(4).isEmpty(), "una bomba no tiene salidas");
         for (int v = 0; v < 9; v++) {
-            assertFalse(neighboursOf(g, v).contains(4), "nadie debe apuntar a la bomba");
+            assertFalse(g.adjacency().get(v).contains(4), "nadie debe apuntar a la bomba");
         }
         assertTrue(g.isBomb(4));
         assertTrue(g.isBomb(1, 1));
+    }
+
+    @Test
+    @DisplayName("Sobre cuadriculas al azar la adyacencia es simetrica y nunca toca una bomba")
+    void randomGridsStaySymmetricAndBombFree() {
+        Random rnd = new Random(20260913L);
+        for (int trial = 0; trial < 40; trial++) {
+            int R = 1 + rnd.nextInt(9);
+            int C = 1 + rnd.nextInt(9);
+            boolean[] bomb = new boolean[R * C];
+            for (int i = 0; i < bomb.length; i++) bomb[i] = rnd.nextInt(4) == 0;
+
+            GridGraph g = GridGraph.of(R, C, bomb);
+            List<List<Integer>> adj = g.adjacency();
+
+            for (int v = 0; v < R * C; v++) {
+                if (bomb[v]) {
+                    assertTrue(adj.get(v).isEmpty(), "la bomba " + v + " no debe tener salidas");
+                    continue;
+                }
+                for (int nb : adj.get(v)) {
+                    assertFalse(bomb[nb], "hay una arista hacia la bomba " + nb);
+                    assertTrue(adj.get(nb).contains(v),
+                            "el paso es reversible: falta " + nb + " -> " + v);
+                    // Vecindad real: exactamente un paso, sin diagonales.
+                    int dr = Math.abs(g.rowOf(v) - g.rowOf(nb));
+                    int dc = Math.abs(g.colOf(v) - g.colOf(nb));
+                    assertEquals(1, dr + dc, "los vecinos estan a un paso y sin diagonales");
+                }
+                assertEquals(adj.get(v).size(), new ArrayList<>(new java.util.HashSet<>(adj.get(v))).size(),
+                        "no debe haber vecinos repetidos");
+            }
+        }
     }
 
     @Test
@@ -91,7 +89,7 @@ class GridGraphTest {
     void singleCellGrid() {
         GridGraph g = GridGraph.of(1, 1, new boolean[1]);
         assertEquals(1, g.size());
-        assertEquals(0, g.edgeCount());
+        assertTrue(g.adjacency().get(0).isEmpty());
     }
 
     @Test

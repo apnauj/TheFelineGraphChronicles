@@ -37,7 +37,7 @@ class MissionOneSolverTest {
         // Con el orden up, down, left, right el DFS baja primero por 'up' (indice 1),
         // y desde ahi vuelve a preferir 'up'... hasta agotar la rama.
         GridGraph grid = GridGraph.of(3, 3, new boolean[9]);
-        SearchResult dfs = DFS.search(grid, 4, 8);
+        SearchResult dfs = DFS.search(grid.adjacency(), 4, 8);
 
         int[] visited = dfs.visited();
         assertEquals(4, visited[0], "debe empezar en el centro");
@@ -170,6 +170,6 @@ class MissionOneSolverTest {
     @DisplayName("El BFS sobre la cuadricula coincide con el BFS sobre la estructura desnuda")
     void bfsMatchesRawGraphTraversal() {
         GridGraph grid = GridGraph.of(4, 4, new boolean[16]);
-        assertEquals(6, BFS.bfs(grid, 0, 15));
+        assertEquals(6, BFS.bfs(grid.adjacency(), 0, 15));
     }
 }

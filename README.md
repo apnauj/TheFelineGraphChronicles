@@ -101,15 +101,17 @@ la cota es `aristas + 1`.
 guarda los vecinos como `right, left, down, up` y la pila es LIFO. Si se toca uno
 de los dos archivos hay que tocar el otro; hay pruebas que lo fijan.
 
-**CSR en vez de `List<List<Integer>>`.** Medido en el limite del enunciado
-(1000x1000 = 10^6 celdas): **144 MB contra 20 MB** y un BFS completo de **66 ms
-contra 36 ms**. No es que la lista de listas no arranque —- 144 MB caben en un
-heap por defecto—-, es que cuesta 7 veces mas memoria y casi el doble de tiempo,
-porque cada vecino son tres saltos de puntero (`ArrayList` -> `Object[]` ->
-`Integer`) con sus fallos de cache, mas la presion de GC de 5 millones de
-objetos. Con el heap acotado si es un fallo duro: la lista de listas revienta por
-debajo de ~192 MB y la version CSR sobrevive con 48 MB. Los numeros salen de
-`mvn -q compile` y el banco de pruebas descrito en el historial de git.
+**Lista de adyacencia con `List<List<Integer>>`, no una estructura comprimida.**
+Se probaron las dos. Medido en el limite del enunciado (1000x1000 = 10^6 celdas),
+una representacion CSR con dos arreglos de `int` gasta 20 MB contra 144 MB y hace
+el BFS en 36 ms contra 66 ms. Se eligio igual la lista de listas: **144 MB caben
+de sobra en un heap por defecto**, asi que no hay nada que se rompa, y a cambio la
+estructura es la que cualquiera lee sin explicacion previa y la que el grupo puede
+defender linea por linea. La ganancia era real pero no hacia falta.
+
+Lo unico que si cambia: con un heap muy acotado la lista de listas revienta por
+debajo de ~192 MB, donde la version CSR seguia funcionando con 48 MB. Si algun dia
+hubiera que correr esto con `-Xmx128m`, esa es la decision que habria que revisar.
 
 **`long` para los costos acumulados** de las Misiones 2, 3 y 4. Con 10.000 nodos
 y pesos de hasta 1.000.000 una ruta llega al orden de 10^10, que no cabe en `int`

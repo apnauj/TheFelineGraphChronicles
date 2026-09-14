@@ -62,18 +62,26 @@ generada equivocada" o simplemente como un error propio encontrado despues.
    a un mismo nodo son del orden de 5·10^9 comparaciones. La seccion 2.2 permite
    guardarlas todas; Dijkstra se queda con la mejor sin ayuda.
 
-4. **La cuadricula era 7 veces mas cara de lo necesario.** `List<List<Integer>>`
-   sobre 10^6 celdas: **144 MB contra 20 MB** medidos, y un BFS de 66 ms contra
-   36 ms. Arreglo: formato CSR con dos arreglos de `int`.
+4. **Una optimizacion innecesaria, justificada con una cifra inventada.** La IA
+   reemplazo la `List<List<Integer>>` de la cuadricula por una estructura
+   comprimida (CSR, dos arreglos de `int`) argumentando que la version original
+   gastaba "del orden de 200 MB, suficiente para agotar el heap por defecto".
 
-   Aqui hay una segunda leccion, sobre la IA y sobre nosotros: la primera
-   justificacion que se escribio decia "del orden de 200 MB, suficiente para
-   agotar el heap por defecto". Las dos mitades estaban mal —- son 144 MB y el
-   heap por defecto son gigabytes—-, y la cifra venia de estimar tamanos de
-   objeto de cabeza en vez de medirlos. Solo revento por debajo de ~192 MB de
-   heap acotado. Se corrigio despues de escribir un banco de pruebas y medir.
-   **Una justificacion plausible que nadie verifico es exactamente lo que el
-   enunciado castiga en la defensa.**
+   Las dos mitades de esa frase eran falsas, y la cifra venia de estimar tamanos
+   de objeto de cabeza en vez de medirlos. Al escribir un banco de pruebas y
+   medirlo de verdad: **144 MB, no 200**, y el heap por defecto son gigabytes,
+   asi que no agotaba nada. La lista de listas solo falla por debajo de ~192 MB
+   de heap acotado.
+
+   Con los numeros reales encima, el grupo decidio **volver a la lista de
+   listas**: el CSR era mas rapido (BFS de 36 ms contra 66 ms) y mas compacto
+   (20 MB contra 144 MB), pero ganaba algo que el problema no necesitaba a cambio
+   de una estructura mas dificil de leer y de defender. La optimizacion estaba
+   bien hecha; simplemente no hacia falta.
+
+   Dos lecciones, y la segunda importa mas que la primera: una justificacion
+   plausible que nadie verifico es exactamente lo que el enunciado castiga en la
+   defensa; y que una optimizacion sea correcta no quiere decir que valga la pena.
 
 ### 3.2 La primera version del dibujo de la Mision 1 era inservible
 
