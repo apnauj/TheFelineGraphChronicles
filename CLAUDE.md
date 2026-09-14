@@ -14,8 +14,16 @@ in the README.
 |---|---|---|
 | 1 — Rescue Nina from the minefield | BFS + DFS on a grid | implemented |
 | 2 — Retrieve the Claude accounts | Dijkstra | implemented |
-| 3 — The ultimate food stash | Floyd-Warshall + Bellman-Ford | another team member |
-| 4 — Reconnect the network | Kruskal + union-find | another team member |
+| 3 — The ultimate food stash | Floyd-Warshall + Bellman-Ford | runs on temporary scaffolding |
+| 4 — Reconnect the network | Kruskal + union-find | runs on temporary scaffolding |
+
+**Missions 3 and 4 are not finished.** They work end to end and produce the statement's expected
+output, but their algorithms live in `missions/stub/` and are placeholders written so the GUI could
+be built and demonstrated while another member writes the real ones. `algo/maxwalk/` and `algo/mst/`
+are deliberately empty and reserved for those. When they land: change the two calls in
+`MissionThreeSolver.solve` / `MissionFourSolver.solve`, delete `missions/stub/`, and flip
+`implemented` to `true` in `ui/screen/Missions.java`. No screen or visualizer changes. Do not quietly
+promote the scaffolding to `algo/` — the in-app banner and the README both say it is temporary.
 
 ## Commands
 
@@ -24,6 +32,7 @@ mvn test                                     # all tests; never opens a window
 mvn test -Dtest=MissionOneSolverTest         # one class
 mvn test -Dtest=MissionOneSolverTest#statementSample   # one method
 mvn javafx:run                               # launch the GUI (the one documented command)
+                                             # needs network on first run to fetch JavaFX
 
 # Run a mission headless, straight from the statement's sample input:
 mvn -q compile
@@ -43,14 +52,25 @@ algo/       pure algorithms. No JavaFX, Swing or AWT import — enforced by Algo
   grid/     GridGraph — the Mission 1 board as a graph
   search/   BFS · DFS · SearchResult
   sp/       Dijkstra · ShortestPathResult
-  maxwalk/  Mission 3 slot (empty)
-  mst/      Mission 4 slot (empty)
+  maxwalk/  Mission 3 slot (empty, reserved)
+  mst/      Mission 4 slot (empty, reserved)
 
 missions/   text in → exact output lines + structured payload out. Still no UI imports.
-  Tokenizer · InputFormatException · MissionSolver · CaseResult · MissionOneSolver · MissionTwoSolver
+  Tokenizer · InputFormatException · MissionSolver · CaseResult · MissionOneSolver … MissionFourSolver
+  stub/     TEMPORARY scaffolding for missions 3 and 4 — see its README
 
 ui/         the only package allowed to import JavaFX.
+  theme/    Theme.java + theme.css — the palette, defined once in two formats
+  screen/   Navigator · LoadingScreen · MissionSelectScreen · MissionScreen · MissionDescriptor · Missions
+  viz/      Visualizer · Playback · GridVisualizer · GraphVisualizer · MaxWalkVisualizer
+            MstVisualizer · MatrixPane · SpringLayout
+  fx/       CatArt — placeholder character art drawn from primitives
 ```
+
+`MissionScreen` is **one class for all four missions**, configured by a `MissionDescriptor`. Adding a
+mission means adding an entry to `Missions.all()`, not writing another screen. `Visualizer<P>` is the
+drawing contract: build a node, render a payload, step through it, and answer whether the instance
+fits the §2.3 size budget.
 
 ### The two contracts everything hangs off
 
@@ -132,3 +152,25 @@ in order.
 how it was fixed**, what each member learned), at least one automated test per algorithm using the
 statement samples as expected values, and a full git history — a single commit on the due date is itself
 a finding at the defense.
+
+## Drawing
+
+Everything is painted on a `Canvas`, never one scene node per cell: a 50×50 grid is 2,500 cells and
+the Mission 3 matrix is 10,000, and a node each takes seconds to build. Node placement is
+`ui/viz/SpringLayout`, a hand-written Fruchterman-Reingold — no graph library is used for drawing
+either. It is O(iterations · N²), which is only acceptable because §2.3 caps drawing at 60 nodes.
+
+BFS and DFS are drawn on **separate boards side by side**. An earlier version overlaid both on one
+grid and the translucent layers blended into a colour that hid which algorithm reached which cell —
+the one thing that mission exists to show. Do not merge them back.
+
+Solving runs on a background `Task`; at the 1000×1000 limit it takes about a second and would
+otherwise freeze the window.
+
+## Verifying UI changes
+
+The screens can be rendered to PNG headlessly-ish and inspected rather than guessed at: build a
+throwaway `Application` that shows a `Stage`, calls `scene.snapshot(...)`, writes the image with
+`ImageIO`, and exits. Note `javafx-swing` is not a dependency, so copy pixels via `PixelReader` into
+a `BufferedImage` instead of `SwingFXUtils`. The launcher class must not extend `Application` or the
+JDK rejects it for not being on the module path — same reason `ui/Launcher` exists.
