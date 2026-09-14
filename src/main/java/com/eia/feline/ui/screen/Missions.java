@@ -1,9 +1,13 @@
 package com.eia.feline.ui.screen;
 
+import com.eia.feline.missions.MissionFourSolver;
 import com.eia.feline.missions.MissionOneSolver;
+import com.eia.feline.missions.MissionThreeSolver;
 import com.eia.feline.missions.MissionTwoSolver;
 import com.eia.feline.ui.fx.CatArt;
 import com.eia.feline.ui.viz.GraphVisualizer;
+import com.eia.feline.ui.viz.MaxWalkVisualizer;
+import com.eia.feline.ui.viz.MstVisualizer;
 import com.eia.feline.ui.viz.GridVisualizer;
 import com.eia.feline.ui.theme.Theme;
 import javafx.scene.Node;
@@ -52,29 +56,29 @@ public final class Missions {
                 true);
     }
 
-    public static MissionDescriptor<Void> three() {
+    public static MissionDescriptor<MissionThreeSolver.Case> three() {
         return new MissionDescriptor<>(
                 3,
                 "El botin de churun",
                 "Maximizar el churun, incluso con pasadizos envenenados",
                 Theme.CHURUN,
                 () -> portrait(Theme.CHURUN),
-                null,
+                new MissionThreeSolver(),
                 "Floyd-Warshall y Bellman-Ford",
-                null,
+                MaxWalkVisualizer::new,
                 false);
     }
 
-    public static MissionDescriptor<Void> four() {
+    public static MissionDescriptor<MissionFourSolver.Case> four() {
         return new MissionDescriptor<>(
                 4,
                 "Reconectando la red",
                 "Volver a unir la universidad con el minimo de cable",
                 Theme.LIMON,
                 () -> CatArt.villain(Theme.LIMON, 104),
-                null,
+                new MissionFourSolver(),
                 "Kruskal con union-find",
-                null,
+                MstVisualizer::new,
                 false);
     }
 

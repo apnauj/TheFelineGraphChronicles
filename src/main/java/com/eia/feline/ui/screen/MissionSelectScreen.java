@@ -81,7 +81,7 @@ public final class MissionSelectScreen extends BorderPane {
         algorithms.getStyleClass().addAll("caption", "mono");
         algorithms.setTextFill(mission.accent());
 
-        Label badge = new Label(mission.implemented() ? "LISTA" : "EN CURSO");
+        Label badge = new Label(mission.implemented() ? "LISTA" : "ANDAMIAJE");
         badge.getStyleClass().addAll("badge", mission.implemented() ? "badge-ready" : "badge-pending");
 
         Node portrait = mission.portrait().get();

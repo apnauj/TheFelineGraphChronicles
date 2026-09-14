@@ -141,7 +141,23 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
             g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
         }
 
-        // 2. Pesos, solo si hay sitio para leerlos.
+        // 2. La ruta mas barata, una vez terminada la exploracion.
+        int[] route = current.reachable() ? current.route() : new int[0];
+        int settledTotal = current.shortestPath().settledCount();
+        if (route.length > 0 && step >= settledTotal) {
+            int walked = Math.min(route.length, step - settledTotal + 1);
+            g.setStroke(Theme.CHURUN);
+            g.setLineWidth(4.5);
+            g.beginPath();
+            for (int i = 0; i < walked; i++) {
+                if (i == 0) g.moveTo(nodeX[route[i]], nodeY[route[i]]);
+                else g.lineTo(nodeX[route[i]], nodeY[route[i]]);
+            }
+            g.stroke();
+        }
+
+        // 3. Pesos, solo si hay sitio para leerlos, y DESPUES de la ruta: pintados
+        //    antes, la linea dorada los tapaba en los tramos que mas interesa leer.
         if (edges.size() <= 40) {
             g.setFont(Font.font(11));
             g.setTextAlign(TextAlignment.CENTER);
@@ -157,21 +173,6 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
                 g.fillText(weight, mx, my - 1);
             }
             g.setTextAlign(TextAlignment.LEFT);
-        }
-
-        // 3. La ruta mas barata, una vez terminada la exploracion.
-        int[] route = current.reachable() ? current.route() : new int[0];
-        int settledTotal = current.shortestPath().settledCount();
-        if (route.length > 0 && step >= settledTotal) {
-            int walked = Math.min(route.length, step - settledTotal + 1);
-            g.setStroke(Theme.CHURUN);
-            g.setLineWidth(4.5);
-            g.beginPath();
-            for (int i = 0; i < walked; i++) {
-                if (i == 0) g.moveTo(nodeX[route[i]], nodeY[route[i]]);
-                else g.lineTo(nodeX[route[i]], nodeY[route[i]]);
-            }
-            g.stroke();
         }
 
         // 4. Los nodos.

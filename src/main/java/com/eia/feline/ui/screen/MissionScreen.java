@@ -71,6 +71,17 @@ public final class MissionScreen<P> extends BorderPane {
             input.setDisable(true);
         }
         showIdleCanvas();
+
+        // Honestidad sobre el estado real: estas misiones ya funcionan, pero sobre
+        // algoritmos de andamiaje escritos para poder construir la interfaz. No se
+        // puede dejar que parezcan terminadas.
+        if (!mission.implemented() && mission.solver() != null) {
+            showBanner("banner-info", "Andamiaje temporal",
+                    "Los algoritmos de esta mision son provisionales, escritos para poder"
+                            + " construir y demostrar la interfaz. La implementacion definitiva"
+                            + " la esta escribiendo otro integrante; cuando llegue, se cambian"
+                            + " las llamadas del solver y ni esta pantalla ni el dibujo cambian.");
+        }
     }
 
     // ---------------------------------------------------------------- cabecera
@@ -317,7 +328,11 @@ public final class MissionScreen<P> extends BorderPane {
     private void showBanner(String styleClass, String heading, String detail) {
         Label title = new Label(heading);
         title.getStyleClass().add("title");
-        title.setTextFill(styleClass.equals("banner-error") ? Theme.ERROR : Theme.CHURUN);
+        title.setTextFill(switch (styleClass) {
+            case "banner-error" -> Theme.ERROR;
+            case "banner-info" -> Theme.MINERVA;
+            default -> Theme.CHURUN;
+        });
 
         Label body = new Label(detail);
         body.getStyleClass().add("subtitle");
