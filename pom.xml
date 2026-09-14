@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.eia.feline</groupId>
+  <artifactId>feline-graph-chronicles</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  <name>The Feline Graph Chronicles</name>
+
+  <properties>
+    <!-- Release 17 (not the local JDK) so the project compiles on any evaluator
+         machine running JDK 17 or later, as required by the statement. -->
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <javafx.version>21.0.5</javafx.version>
+    <junit.version>5.11.4</junit.version>
+    <mainClass>com.eia.feline.ui.Launcher</mainClass>
+  </properties>
+
+  <dependencies>
+    <!-- JavaFX. The org.openjfx poms auto-select the OS/arch classifier, so a
+         clean clone builds on macOS, Windows and Linux without edits. -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-graphics</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.2</version>
+        <configuration>
+          <!-- Mission 1 allocates ~80 MB of int[] at the 1000x1000 limit. -->
+          <argLine>-Xmx1g</argLine>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+        <configuration>
+          <mainClass>${mainClass}</mainClass>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
