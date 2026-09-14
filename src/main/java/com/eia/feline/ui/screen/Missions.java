@@ -3,6 +3,8 @@ package com.eia.feline.ui.screen;
 import com.eia.feline.missions.MissionOneSolver;
 import com.eia.feline.missions.MissionTwoSolver;
 import com.eia.feline.ui.fx.CatArt;
+import com.eia.feline.ui.viz.GraphVisualizer;
+import com.eia.feline.ui.viz.GridVisualizer;
 import com.eia.feline.ui.theme.Theme;
 import javafx.scene.Node;
 
@@ -33,7 +35,7 @@ public final class Missions {
                 () -> portrait(Theme.NINA),
                 new MissionOneSolver(),
                 "BFS y DFS",
-                null,                       // el visualizador entra en la fase siguiente
+                GridVisualizer::new,
                 true);
     }
 
@@ -46,7 +48,7 @@ public final class Missions {
                 () -> portrait(Theme.MINERVA),
                 new MissionTwoSolver(),
                 "Dijkstra",
-                null,
+                GraphVisualizer::new,
                 true);
     }
 
