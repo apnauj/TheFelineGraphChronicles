@@ -1,0 +1,286 @@
+/*
+ * Tema de The Feline Graph Chronicles.
+ *
+ * Los colores se declaran una vez como "looked-up colors" en .root y todo lo
+ * demas los referencia por nombre. JavaFX CSS no tiene var(): este es el
+ * mecanismo equivalente. Los mismos valores estan en Theme.java para lo que se
+ * pinta sobre Canvas.
+ */
+
+.root {
+    -bg:        #14121F;
+    -panel:     #1F1B2E;
+    -panel-alt: #282239;
+    -stroke:    #322C4A;
+    -text:      #EDE9F5;
+    -muted:     #9A92B8;
+
+    -pola:    #FF8A3D;
+    -minerva: #4DD0E1;
+    -limon:   #C2185B;
+    -churun:  #FFD54F;
+    -nina:    #F06292;
+    -ok:      #66BB6A;
+    -error:   #EF5350;
+
+    -fx-background-color: -bg;
+    -fx-font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: -text;
+}
+
+.mono {
+    -fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+}
+
+/* ---------- tipografia ---------- */
+
+.display {
+    -fx-font-size: 34px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text;
+}
+
+.title {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -text;
+}
+
+.subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: -muted;
+}
+
+.caption {
+    -fx-font-size: 11px;
+    -fx-text-fill: -muted;
+}
+
+.section-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -muted;
+}
+
+/* ---------- superficies ---------- */
+
+.panel {
+    -fx-background-color: -panel;
+    -fx-background-radius: 14;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+}
+
+.panel-sunken {
+    -fx-background-color: -bg;
+    -fx-background-radius: 10;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
+
+/* ---------- botones ---------- */
+
+.button {
+    -fx-background-color: -panel-alt;
+    -fx-text-fill: -text;
+    -fx-background-radius: 10;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 8 16 8 16;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.button:hover  { -fx-background-color: derive(-panel-alt, 18%); }
+.button:pressed{ -fx-background-color: derive(-panel-alt, -10%); }
+.button:disabled { -fx-opacity: 0.4; -fx-cursor: default; }
+
+.button-primary {
+    -fx-background-color: -pola;
+    -fx-text-fill: #201406;
+    -fx-border-color: transparent;
+}
+.button-primary:hover   { -fx-background-color: derive(#FF8A3D, 14%); }
+.button-primary:pressed { -fx-background-color: derive(#FF8A3D, -12%); }
+
+.button-ghost {
+    -fx-background-color: transparent;
+    -fx-border-color: -stroke;
+    -fx-text-fill: -muted;
+}
+.button-ghost:hover { -fx-background-color: -panel-alt; -fx-text-fill: -text; }
+
+.icon-button {
+    -fx-padding: 6 12 6 12;
+    -fx-font-size: 14px;
+}
+
+/* ---------- entradas ---------- */
+
+.text-area, .text-area .content {
+    -fx-background-color: -bg;
+    -fx-text-fill: -text;
+    -fx-highlight-fill: -minerva;
+    -fx-highlight-text-fill: #0E1418;
+}
+
+.text-area {
+    -fx-background-radius: 10;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+    -fx-font-size: 12.5px;
+}
+
+.text-area:focused { -fx-border-color: -minerva; }
+
+.scroll-pane, .scroll-pane .viewport { -fx-background-color: transparent; }
+.scroll-bar          { -fx-background-color: transparent; }
+.scroll-bar .thumb   { -fx-background-color: -stroke; -fx-background-radius: 6; }
+.scroll-bar .thumb:hover { -fx-background-color: -muted; }
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button { -fx-background-color: transparent; -fx-padding: 0; }
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow  { -fx-shape: " "; -fx-padding: 0; }
+
+/* ---------- avisos ---------- */
+
+.banner-error {
+    -fx-background-color: rgba(239, 83, 80, 0.14);
+    -fx-border-color: -error;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 16 12 16;
+}
+
+.banner-warn {
+    -fx-background-color: rgba(255, 213, 79, 0.12);
+    -fx-border-color: -churun;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 16 12 16;
+}
+
+.banner-info {
+    -fx-background-color: rgba(77, 208, 225, 0.10);
+    -fx-border-color: -minerva;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 16 12 16;
+}
+
+.text-error { -fx-text-fill: -error; }
+.text-warn  { -fx-text-fill: -churun; }
+.text-ok    { -fx-text-fill: -ok; }
+
+/* ---------- tarjetas de mision ---------- */
+
+.mission-card {
+    -fx-background-color: -panel;
+    -fx-background-radius: 18;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 18;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-padding: 22;
+}
+
+.mission-card:hover { -fx-border-color: -pola; }
+
+.mission-number {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -muted;
+}
+
+.badge {
+    -fx-background-radius: 20;
+    -fx-padding: 3 10 3 10;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.badge-pending {
+    -fx-background-color: rgba(194, 24, 91, 0.22);
+    -fx-text-fill: #FF8FB5;
+}
+
+.badge-ready {
+    -fx-background-color: rgba(102, 187, 106, 0.18);
+    -fx-text-fill: -ok;
+}
+
+/* ---------- barra de reproduccion ---------- */
+
+.slider .track { -fx-background-color: -stroke; -fx-background-radius: 4; }
+.slider .thumb { -fx-background-color: -pola; }
+
+.progress-bar > .track {
+    -fx-background-color: -bg;
+    -fx-background-radius: 20;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 20;
+}
+.progress-bar > .bar {
+    -fx-background-color: linear-gradient(to right, -pola, -churun);
+    -fx-background-radius: 20;
+    -fx-padding: 6;
+}
+
+.progress-indicator { -fx-progress-color: -pola; }
+
+/* ---------- separadores ---------- */
+
+.separator .line {
+    -fx-border-color: -stroke;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* ---------- combo box ---------- */
+
+.combo-box {
+    -fx-background-color: -panel-alt;
+    -fx-background-radius: 10;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 2;
+}
+
+.combo-box:hover { -fx-border-color: -muted; }
+.combo-box:disabled { -fx-opacity: 0.4; }
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -text;
+    -fx-padding: 5 10 5 10;
+}
+
+.combo-box .arrow,
+.combo-box .arrow-button { -fx-background-color: transparent; }
+.combo-box .arrow { -fx-background-color: -muted; }
+
+.combo-box-popup .list-view {
+    -fx-background-color: -panel-alt;
+    -fx-background-radius: 10;
+    -fx-border-color: -stroke;
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+}
+
+.combo-box-popup .list-view .list-cell:filled:hover,
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: -pola;
+    -fx-text-fill: #201406;
+}
+
+/* Un area de texto deshabilitada no debe aclararse: se apaga. */
+.text-area:disabled { -fx-opacity: 0.45; }
