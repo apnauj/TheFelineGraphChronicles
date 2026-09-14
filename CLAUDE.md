@@ -129,11 +129,15 @@ algorithm.
 
 ## Why CSR instead of `List<List<Integer>>`
 
-At the statement's limit (1000×1000 = 10^6 cells) a list of lists needs ~10^6 `ArrayList` objects plus an
-autoboxed `Integer` per neighbour — on the order of 200 MB, enough to exhaust the default heap. Two
-primitive `int[]` arrays use ~20 MB and iterate contiguously. `GridGraphTest` keeps the original
-list-of-lists construction as a reference and asserts the CSR build matches it neighbour for neighbour,
-in order.
+Measured at the statement's limit (1000×1000 = 10^6 cells): **144 MB vs 20 MB**, and a full BFS in
+**66 ms vs 36 ms**. Note this is *not* "the old version doesn't start" — 144 MB fits a default heap
+fine. It is 7× the memory and ~2× the time, because each neighbour costs three pointer hops
+(`ArrayList` → `Object[]` → `Integer`) plus cache misses, plus GC pressure from 5M objects. It only
+becomes a hard failure under a constrained heap: list-of-lists dies below ~192 MB, CSR survives at
+48 MB. Don't claim it OOMs on default settings — it doesn't.
+
+`GridGraphTest` keeps the original list-of-lists construction as a reference and asserts the CSR build
+matches it neighbour for neighbour, in order.
 
 ## Conventions
 

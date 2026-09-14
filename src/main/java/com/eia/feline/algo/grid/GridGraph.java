@@ -20,9 +20,16 @@ import com.eia.feline.algo.graph.Adjacency;
  *
  * POR QUE CSR Y NO List<List<Integer>>:
  * en el limite del enunciado (1000 x 1000 = 10^6 celdas) una lista de listas
- * necesita ~10^6 objetos ArrayList mas un Integer autoboxed por vecino: del orden
- * de 200 MB, suficiente para agotar el heap por defecto. Los dos arreglos de
- * enteros primitivos ocupan ~20 MB y ademas se recorren de forma contigua.
+ * necesita ~10^6 objetos ArrayList, cada uno con su arreglo interno, mas un
+ * Integer autoboxed por vecino. Medido en esta maquina: 144 MB contra 20 MB, y
+ * un BFS completo de 66 ms contra 36 ms.
+ *
+ * Los 144 MB caben de sobra en un heap por defecto, asi que esto NO es un
+ * problema de "no arranca": es 7x mas memoria y casi el doble de tiempo, porque
+ * cada vecino cuesta tres saltos de puntero (ArrayList -> Object[] -> Integer)
+ * y otros tantos fallos de cache, mas la presion de GC de 5 millones de objetos.
+ * Donde si se vuelve un fallo duro es con el heap acotado: la lista de listas
+ * revienta por debajo de ~192 MB y la version CSR sigue funcionando con 48 MB.
  *
  * Complejidad de la construccion: O(R * C) tiempo (dos pasadas), O(R * C) espacio.
  */

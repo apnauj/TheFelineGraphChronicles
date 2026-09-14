@@ -62,9 +62,18 @@ generada equivocada" o simplemente como un error propio encontrado despues.
    a un mismo nodo son del orden de 5·10^9 comparaciones. La seccion 2.2 permite
    guardarlas todas; Dijkstra se queda con la mejor sin ayuda.
 
-4. **La cuadricula se quedaba sin memoria en el limite.** `List<List<Integer>>`
-   sobre 10^6 celdas son ~10^6 objetos `ArrayList` mas un `Integer` autoboxed por
-   vecino: mas de 200 MB. Arreglo: formato CSR con dos arreglos de `int`, ~20 MB.
+4. **La cuadricula era 7 veces mas cara de lo necesario.** `List<List<Integer>>`
+   sobre 10^6 celdas: **144 MB contra 20 MB** medidos, y un BFS de 66 ms contra
+   36 ms. Arreglo: formato CSR con dos arreglos de `int`.
+
+   Aqui hay una segunda leccion, sobre la IA y sobre nosotros: la primera
+   justificacion que se escribio decia "del orden de 200 MB, suficiente para
+   agotar el heap por defecto". Las dos mitades estaban mal —- son 144 MB y el
+   heap por defecto son gigabytes—-, y la cifra venia de estimar tamanos de
+   objeto de cabeza en vez de medirlos. Solo revento por debajo de ~192 MB de
+   heap acotado. Se corrigio despues de escribir un banco de pruebas y medir.
+   **Una justificacion plausible que nadie verifico es exactamente lo que el
+   enunciado castiga en la defensa.**
 
 ### 3.2 La primera version del dibujo de la Mision 1 era inservible
 
