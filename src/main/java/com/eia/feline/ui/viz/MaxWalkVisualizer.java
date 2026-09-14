@@ -2,6 +2,7 @@ package com.eia.feline.ui.viz;
 
 import com.eia.feline.algo.graph.EdgeList;
 import com.eia.feline.missions.MissionThreeSolver;
+import com.eia.feline.ui.theme.Fonts;
 import com.eia.feline.ui.theme.Theme;
 import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
@@ -131,12 +132,26 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         canvas.setWidth(Math.max(1, canvasHolder.getWidth()));
         canvas.setHeight(Math.max(1, canvasHolder.getHeight()));
         if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1) {
+            double radius = nodeRadius();
+            // La separacion minima es el diametro mas sitio para la etiqueta del
+            // peso: sin ella los nodos salen encimados y no se lee ni su numero.
+            double minSeparation = radius * 2 + 34;
             double[][] positions = SpringLayout.compute(current.nodes(), current.edges(),
-                    canvas.getWidth(), canvas.getHeight(), 44, 1234L);
+                    canvas.getWidth(), canvas.getHeight(), radius + 16, minSeparation, 1234L);
             nodeX = positions[0];
             nodeY = positions[1];
         }
         repaint();
+    }
+
+    /**
+     * Radio del nodo. Se calcula en un solo sitio porque lo necesitan tanto el
+     * dibujo como la colocacion, y si no coincidieran la separacion minima
+     * quedaria mal calculada.
+     */
+    private double nodeRadius() {
+        int n = (current == null) ? 8 : current.nodes();
+        return Math.max(13, Math.min(26, 420.0 / Math.max(5, n)));
     }
 
     private void repaint() {
@@ -147,7 +162,7 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         if (current == null || nodeX.length == 0) return;
 
         EdgeList edges = current.edges();
-        double radius = Math.max(9, Math.min(19, 300.0 / Math.max(4, current.nodes())));
+        double radius = nodeRadius();
 
         // 1. Los pasadizos, con punta de flecha porque son dirigidos.
         for (int e = 0; e < edges.size(); e++) {
@@ -179,24 +194,42 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         // 3. Los pesos, DESPUES del resaltado: pintados antes, la linea dorada
         //    del paseo los tapaba justo en los tramos que mas interesa leer.
         if (edges.size() <= 40) {
-            g.setFont(Font.font(11));
+            g.setFont(Font.font(Fonts.BODY, 12.5));
             g.setTextAlign(TextAlignment.CENTER);
             for (int e = 0; e < edges.size(); e++) {
                 int a = edges.from(e), b = edges.to(e);
                 if (a == b) continue;
-                double mx = (nodeX[a] + nodeX[b]) / 2, my = (nodeY[a] + nodeY[b]) / 2;
+                // La etiqueta se aparta PERPENDICULARMENTE a la arista en vez de
+                // ir en su punto medio: encima de la linea la tapaba la ruta
+                // dorada, y en pares con dos aristas (a->b y b->a) las dos
+                // etiquetas caian en el mismo pixel. Cada sentido se desplaza a
+                // un lado distinto, asi que ambas se leen.
+                // La perpendicular se toma SIEMPRE en el sentido canonico (del
+                // indice menor al mayor) y solo despues se elige el lado. Tomarla
+                // en el sentido de la arista invertia el vector Y el lado a la vez,
+                // los dos signos se cancelaban, y las etiquetas de a->b y b->a
+                // acababan en el mismo pixel: una tapaba a la otra.
+                int lo = Math.min(a, b), hi = Math.max(a, b);
+                double ex = nodeX[hi] - nodeX[lo], ey = nodeY[hi] - nodeY[lo];
+                double len = Math.max(1e-6, Math.hypot(ex, ey));
+                double offset = 14 * ((a < b) ? 1 : -1);
+                double mx = (nodeX[a] + nodeX[b]) / 2 - ey / len * offset;
+                double my = (nodeY[a] + nodeY[b]) / 2 + ex / len * offset;
+
                 String weight = String.valueOf(edges.weight(e));
-                double chipW = 7 + weight.length() * 6.2;
-                g.setFill(Theme.fade(Theme.PAPER, 0.88));
-                g.fillRoundRect(mx - chipW / 2, my - 12, chipW, 14, 6, 6);
-                g.setFill(edges.weight(e) < 0 ? Theme.LIMON : Theme.fade(Theme.INK_SOFT, 0.95));
-                g.fillText(weight, mx, my - 1);
+                double chipW = 9 + weight.length() * 7.0;
+                g.setFill(Theme.PAPER);
+                g.fillRoundRect(mx - chipW / 2, my - 11, chipW, 17, 7, 7);
+                g.setStroke(Theme.INK);
+                g.setLineWidth(1.6);
+                g.strokeRoundRect(mx - chipW / 2, my - 11, chipW, 17, 7, 7);
+                g.setFill(edges.weight(e) < 0 ? Theme.LIMON : Theme.INK);
+                g.fillText(weight, mx, my + 2);
             }
             g.setTextAlign(TextAlignment.LEFT);
         }
 
         // 4. Los nodos.
-        g.setFont(Font.font(Math.max(10, radius)));
         g.setTextAlign(TextAlignment.CENTER);
         for (int v = 0; v < current.nodes(); v++) {
             Color fill = Theme.PAPER_DEEP;
@@ -209,10 +242,9 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
             g.setLineWidth(2.6);
             g.strokeOval(nodeX[v] - radius, nodeY[v] - radius, radius * 2, radius * 2);
 
-            if (radius >= 10) {
-                g.setFill(fill == Theme.PAPER_DEEP ? Theme.INK_SOFT : Theme.PAPER);
-                g.fillText(String.valueOf(v), nodeX[v], nodeY[v] + radius * 0.38);
-            }
+            g.setFill(fill == Theme.PAPER_DEEP ? Theme.INK : Theme.PAPER);
+            g.setFont(Font.font(Fonts.DISPLAY, Math.max(14, radius * 1.25)));
+            g.fillText(String.valueOf(v), nodeX[v], nodeY[v] + radius * 0.42);
         }
         g.setTextAlign(TextAlignment.LEFT);
     }

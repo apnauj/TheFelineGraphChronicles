@@ -2,7 +2,9 @@ package com.eia.feline.ui.viz;
 
 import com.eia.feline.algo.graph.EdgeList;
 
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Colocacion de los nodos de un grafo por simulacion de fuerzas (Fruchterman-
@@ -10,9 +12,9 @@ import java.util.Random;
  *
  * El enunciado prohibe las librerias de grafos para el nucleo algoritmico y
  * permite una libreria solo para dibujar; en vez de agregar una dependencia por
- * esto, son cincuenta lineas: cada par de nodos se repele, cada arista tira de
- * sus extremos, y una "temperatura" que baja evita que el sistema oscile para
- * siempre.
+ * esto, son unas cien lineas: cada par de nodos se repele, cada PAR CONECTADO
+ * tira de sus extremos, y una "temperatura" que baja evita que el sistema oscile
+ * para siempre.
  *
  * Es O(iteraciones * N^2) por la repulsion de todos contra todos, lo cual solo es
  * aceptable porque la seccion 2.3 limita el dibujo a 60 nodos (Misiones 2 y 3) y
@@ -23,9 +25,16 @@ public final class SpringLayout {
 
     private SpringLayout() {}
 
-    /** Devuelve {xs, ys} con coordenadas ya escaladas al rectangulo pedido. */
+    /**
+     * Devuelve {xs, ys} con coordenadas ya escaladas al rectangulo pedido y con
+     * una separacion minima garantizada entre nodos.
+     *
+     * @param minSeparation distancia minima entre centros, en pixeles. Se pasa el
+     *                      diametro del nodo mas un margen, para que las etiquetas
+     *                      quepan y los circulos no se toquen.
+     */
     public static double[][] compute(int n, EdgeList edges, double width, double height,
-                                     double margin, long seed) {
+                                     double margin, double minSeparation, long seed) {
         double[] x = new double[n];
         double[] y = new double[n];
 
@@ -37,7 +46,23 @@ public final class SpringLayout {
             x[i] = Math.cos(angle) * 100 + rnd.nextDouble() * 2 - 1;
             y[i] = Math.sin(angle) * 100 + rnd.nextDouble() * 2 - 1;
         }
-        if (n == 1) return scale(x, y, width, height, margin);
+        if (n == 1) {
+            return new double[][]{ { width / 2 }, { height / 2 } };
+        }
+
+        // UN SOLO RESORTE POR PAR CONECTADO.
+        // Si se recorriera la lista de aristas tal cual, un par con varias aristas
+        // entre el (frecuente: el enunciado admite repetidas, y en la Mision 3 son
+        // dirigidas, asi que a->b y b->a son dos entradas) recibiria el tiron
+        // multiplicado y los dos nodos quedarian pegados uno encima del otro. Eso
+        // es exactamente lo que pasaba con el ejemplo de la Mision 3, donde 1 y 2
+        // tienen dos pasadizos y salian encimados.
+        Set<Long> pairs = new HashSet<>();
+        for (int e = 0; e < edges.size(); e++) {
+            int a = edges.from(e), b = edges.to(e);
+            if (a == b) continue;                       // un lazo no mueve nada
+            pairs.add(key(a, b));
+        }
 
         double area = 200 * 200;
         double k = Math.sqrt(area / n);            // distancia de equilibrio
@@ -63,10 +88,9 @@ public final class SpringLayout {
                 }
             }
 
-            // Atraccion a lo largo de las aristas.
-            for (int e = 0; e < edges.size(); e++) {
-                int a = edges.from(e), b = edges.to(e);
-                if (a == b) continue;                       // un lazo no mueve nada
+            // Atraccion, una vez por par conectado.
+            for (long pair : pairs) {
+                int a = (int) (pair >> 32), b = (int) (pair & 0xFFFFFFFFL);
                 double ux = x[a] - x[b], uy = y[a] - y[b];
                 double dist = Math.max(0.01, Math.hypot(ux, uy));
                 double force = (dist * dist) / k;
@@ -85,7 +109,57 @@ public final class SpringLayout {
             temperature = Math.max(0.6, temperature * 0.965);
         }
 
-        return scale(x, y, width, height, margin);
+        double[][] placed = scale(x, y, width, height, margin);
+        separate(placed[0], placed[1], minSeparation, width, height, margin);
+        return placed;
+    }
+
+    /** Clave canonica de un par no ordenado, empaquetada en un long. */
+    private static long key(int a, int b) {
+        int lo = Math.min(a, b), hi = Math.max(a, b);
+        return ((long) lo << 32) | (hi & 0xFFFFFFFFL);
+    }
+
+    /**
+     * Empuja los nodos que queden mas cerca que minSeparation.
+     *
+     * La simulacion de fuerzas equilibra el grafo COMPLETO, pero no garantiza nada
+     * sobre un par concreto: en grafos alargados o muy conectados siguen saliendo
+     * nodos casi encimados, y entonces no se leen ni su numero ni el peso de sus
+     * aristas. Estas pasadas son la garantia dura que la simulacion no da.
+     */
+    private static void separate(double[] x, double[] y, double minSeparation,
+                                 double width, double height, double margin) {
+        int n = x.length;
+        if (n < 2 || minSeparation <= 0) return;
+
+        for (int pass = 0; pass < 60; pass++) {
+            boolean moved = false;
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
+                    double ux = x[j] - x[i], uy = y[j] - y[i];
+                    double dist = Math.hypot(ux, uy);
+
+                    if (dist >= minSeparation) continue;
+
+                    // Dos nodos exactamente encima: se separan en una direccion
+                    // arbitraria pero estable, o la division de abajo seria por cero.
+                    if (dist < 1e-6) { ux = 1; uy = 0; dist = 1e-6; }
+
+                    double push = (minSeparation - dist) / 2 + 0.5;
+                    double nx = ux / dist * push, ny = uy / dist * push;
+                    x[i] -= nx; y[i] -= ny;
+                    x[j] += nx; y[j] += ny;
+                    moved = true;
+                }
+            }
+            // Se devuelven al rectangulo los que se hayan salido al empujar.
+            for (int i = 0; i < n; i++) {
+                x[i] = Math.max(margin, Math.min(width - margin, x[i]));
+                y[i] = Math.max(margin, Math.min(height - margin, y[i]));
+            }
+            if (!moved) break;
+        }
     }
 
     /** Lleva la nube de puntos al rectangulo de dibujo conservando la proporcion. */
@@ -113,8 +187,6 @@ public final class SpringLayout {
             outX[i] = offsetX + (x[i] - minX) * factor;
             outY[i] = offsetY + (y[i] - minY) * factor;
         }
-        // Un solo nodo queda en una esquina tras el escalado: se centra a mano.
-        if (n == 1) { outX[0] = width / 2; outY[0] = height / 2; }
         return new double[][]{ outX, outY };
     }
 }

@@ -10,7 +10,9 @@ import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -36,6 +38,15 @@ public final class MissionSelectScreen extends BorderPane {
         // contenedor. Va como Background y no como un nodo: ver Ink.paperBackground.
         Ink.paperBackground(this, Theme.PAPER, Theme.CAPE, 0.20);
 
+        Button back = new Button("< PORTADA");
+        back.getStyleClass().add("button-ghost");
+        back.setOnAction(e -> {
+            LoadingScreen cover = LoadingScreen.cover(
+                    () -> navigator.go(new MissionSelectScreen(navigator)));
+            navigator.go(cover);
+            cover.play();
+        });
+
         Label title = new Label("ELIGE TU MISION");
         title.getStyleClass().add("display");
 
@@ -46,8 +57,11 @@ public final class MissionSelectScreen extends BorderPane {
         blurb.setWrapText(true);
         blurb.setMaxWidth(760);
 
-        VBox header = new VBox(8, title, blurb);
-        header.setPadding(new Insets(0, 0, 26, 0));
+        HBox titleRow = new HBox(16, back, title);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
+
+        VBox header = new VBox(8, titleRow, blurb);
+        header.setPadding(new Insets(0, 0, 22, 0));
 
         // HBox y no FlowPane: con setFillHeight(true) el HBox estira las vinetas a
         // la altura de la fila por si mismo. Atar la altura de la vineta a la del
@@ -98,6 +112,13 @@ public final class MissionSelectScreen extends BorderPane {
         Node portrait = mission.portrait().get();
         StackPane portraitHolder = new StackPane(portrait);
         portraitHolder.setMinHeight(140);
+
+        // El arte real crece con la vineta; los marcadores dibujados por codigo se
+        // quedan a su tamano, que para un marcador ya esta bien.
+        if (portrait instanceof ImageView art) {
+            art.setPreserveRatio(true);
+            art.fitHeightProperty().bind(portraitHolder.heightProperty().subtract(18));
+        }
         // El retrato se queda con el espacio sobrante y el texto baja al pie de la
         // vineta, como el cartucho de narracion de un comic.
         VBox.setVgrow(portraitHolder, Priority.ALWAYS);

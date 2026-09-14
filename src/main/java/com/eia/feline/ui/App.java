@@ -49,7 +49,7 @@ public final class App extends Application {
         stage.setMinHeight(MIN_HEIGHT);
 
         // La pantalla de carga se muestra sola y avisa cuando termina.
-        LoadingScreen loading = new LoadingScreen(() -> navigator.go(new MissionSelectScreen(navigator)));
+        LoadingScreen loading = LoadingScreen.intro(() -> navigator.go(new MissionSelectScreen(navigator)));
         root.getChildren().add(loading);
         loading.play();
 

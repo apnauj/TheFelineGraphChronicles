@@ -70,6 +70,16 @@ Destino: `art/svg/`. Lienzo cuadrado 1000 x 1000, personaje centrado ocupando
 > frame.
 
 ### `limon.svg` — el jefe
+**YA GENERADO** y en el proyecto: `art/png/limon.png`. Salio **azul y crema con
+ojos cian**, no carmesi como pedia el prompt de abajo. Como el resultado es bueno
+y encaja con el tema, se quedo, y el acento de la vineta de la Mision 4 se cambio
+a azul para que combine. Dos consecuencias:
+
+- `Theme.LIMON` (carmesi) sigue siendo el color de **peligro** -- bombas y pesos
+  negativos -- y ya no el color del personaje. Son dos cosas distintas.
+- Si se regeneran los demas villanos, conviene decidir: o se rehace Limon en
+  carmesi, o se cambia el prompt de Nero para que acompane al azul.
+
 > Full-body villain cat character named Limon, the ruthless leader. Large,
 > broad-shouldered, looming forward menacingly with one paw extended in a
 > grasping gesture. Deep crimson fur #D81B4A with darker markings. Narrow evil

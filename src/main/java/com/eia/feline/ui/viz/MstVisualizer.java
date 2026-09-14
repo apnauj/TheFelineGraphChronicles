@@ -113,8 +113,9 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         canvas.setWidth(Math.max(1, canvasHolder.getWidth()));
         canvas.setHeight(Math.max(1, canvasHolder.getHeight()));
         if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1) {
+            double radius = Math.max(10, Math.min(22, 340.0 / Math.max(5, current.nodes())));
             double[][] positions = SpringLayout.compute(current.nodes(), current.cables(),
-                    canvas.getWidth(), canvas.getHeight(), 42, 1234L);
+                    canvas.getWidth(), canvas.getHeight(), radius + 16, radius * 2 + 22, 1234L);
             nodeX = positions[0];
             nodeY = positions[1];
         }
@@ -133,7 +134,7 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         int[] order = current.order();
         boolean[] accepted = current.accepted();
         int examined = Math.min(step, order.length);
-        double radius = Math.max(8, Math.min(17, 280.0 / Math.max(4, current.nodes())));
+        double radius = Math.max(10, Math.min(22, 340.0 / Math.max(5, current.nodes())));
 
         // 1. Todos los cables disponibles, apagados.
         g.setLineWidth(1.3);

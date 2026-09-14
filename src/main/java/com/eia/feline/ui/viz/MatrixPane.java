@@ -35,8 +35,11 @@ public final class MatrixPane {
         scroll.setFitToHeight(false);
         scroll.setPannable(true);
         scroll.getStyleClass().add("panel-sunken");
-        scroll.setMinHeight(150);
-        scroll.setPrefHeight(230);
+        scroll.setMinHeight(110);
+        scroll.setPrefHeight(178);
+        // El grafo necesita el alto mas que la matriz: la matriz se desplaza,
+        // el grafo no.
+        scroll.setMaxHeight(210);
     }
 
     public ScrollPane node() { return scroll; }

@@ -104,10 +104,10 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
         canvas.setHeight(Math.max(1, canvasHolder.getHeight()));
 
         if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1) {
-            double margin = 46;
+            double radius = Math.max(11, Math.min(24, 380.0 / Math.max(5, current.nodes())));
             double[][] positions = SpringLayout.compute(
                     current.nodes(), current.edges(),
-                    canvas.getWidth(), canvas.getHeight(), margin,
+                    canvas.getWidth(), canvas.getHeight(), radius + 18, radius * 2 + 30,
                     // Semilla fija: el mismo grafo se dibuja siempre igual, lo que
                     // hace que la demostracion sea reproducible.
                     1234L);
@@ -130,7 +130,7 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
         int[] order = current.shortestPath().settleOrder();
         for (int i = 0; i < settledShown; i++) settled[order[i]] = true;
 
-        double radius = Math.max(9, Math.min(20, 320.0 / Math.max(4, current.nodes())));
+        double radius = Math.max(11, Math.min(24, 380.0 / Math.max(5, current.nodes())));
 
         // 1. Todas las conexiones, apagadas.
         g.setLineWidth(1.4);

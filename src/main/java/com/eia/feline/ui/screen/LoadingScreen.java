@@ -13,6 +13,7 @@ import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.Pane;
@@ -50,15 +51,32 @@ public final class LoadingScreen extends StackPane {
     private static final double FEET_OFFSET = 74;
 
     private final Runnable onFinished;
+    private final boolean autoAdvance;
     private final ProgressBar progress = new ProgressBar(0);
     private final Label typed = new Label("");
+    private final Button start = new Button("COMENZAR");
     private final Pane backdrop = new Pane();
 
     private Timeline typewriter;
     private Animation gait;
 
-    public LoadingScreen(Runnable onFinished) {
+    /** La portada del arranque: la barra se llena y pasa sola a la seleccion. */
+    public static LoadingScreen intro(Runnable onFinished) {
+        return new LoadingScreen(onFinished, true);
+    }
+
+    /**
+     * La misma portada, pero alcanzada desde el boton de volver del menu. Aqui NO
+     * puede avanzar sola: si lo hiciera, volver al menu desde la portada rebotaria
+     * al instante y el boton de volver no serviria de nada. Se espera al usuario.
+     */
+    public static LoadingScreen cover(Runnable onContinue) {
+        return new LoadingScreen(onContinue, false);
+    }
+
+    private LoadingScreen(Runnable onFinished, boolean autoAdvance) {
         this.onFinished = onFinished;
+        this.autoAdvance = autoAdvance;
         Fonts.install();
 
         // Papel tramado como fondo de la pantalla, no como nodo: un rectangulo
@@ -93,7 +111,17 @@ public final class LoadingScreen extends StackPane {
         heading.setMaxHeight(Region.USE_PREF_SIZE);
         StackPane.setAlignment(heading, Pos.TOP_CENTER);
 
-        VBox footer = new VBox(12, progress, typed);
+        start.getStyleClass().add("button-primary");
+        start.setOnAction(e -> {
+            stopAnimations();
+            onFinished.run();
+        });
+        start.setVisible(!autoAdvance);
+        start.setManaged(!autoAdvance);
+        progress.setVisible(autoAdvance);
+        progress.setManaged(autoAdvance);
+
+        VBox footer = new VBox(12, progress, start, typed);
         footer.setAlignment(Pos.CENTER);
         footer.setPadding(new Insets(0, 40, 70, 40));
         footer.setMaxWidth(Region.USE_PREF_SIZE);
@@ -230,7 +258,7 @@ public final class LoadingScreen extends StackPane {
         return new Group(dust, holder);
     }
 
-    /** Arranca la carga; al terminar llama a onFinished en el hilo de JavaFX. */
+    /** Arranca la portada. En modo intro avanza sola; en modo portada espera. */
     public void play() {
         typewriter = new Timeline();
         for (int i = 0; i <= MESSAGE.length(); i++) {
@@ -239,6 +267,11 @@ public final class LoadingScreen extends StackPane {
                     Duration.millis(38.0 * i), e -> typed.setText(MESSAGE.substring(0, upTo))));
         }
         typewriter.play();
+
+        if (!autoAdvance) {
+            Ink.pop(start, Duration.millis(420)).play();
+            return;
+        }
 
         Timeline fill = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(progress.progressProperty(), 0)),
