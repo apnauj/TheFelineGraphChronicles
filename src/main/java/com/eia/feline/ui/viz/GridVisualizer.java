@@ -57,7 +57,7 @@ public final class GridVisualizer implements Visualizer<MissionOneSolver.Case> {
         showBfs.setOnAction(e -> repaint());
         showDfs.setOnAction(e -> repaint());
 
-        scoreboard.getStyleClass().addAll("mono", "title");
+        scoreboard.getStyleClass().add("scoreboard");
 
         HBox legend = new HBox(18, showBfs, showDfs);
         legend.setAlignment(Pos.CENTER_LEFT);
@@ -102,7 +102,7 @@ public final class GridVisualizer implements Visualizer<MissionOneSolver.Case> {
         scoreboard.setText(c.reachable()
                 ? "BFS " + c.bfsMoves() + "   DFS " + c.dfsMoves()
                 : "Nina is unreachable");
-        scoreboard.setTextFill(c.reachable() ? Theme.TEXT : Theme.LIMON);
+        scoreboard.setTextFill(c.reachable() ? Theme.INK : Theme.LIMON);
         resize();
     }
 
@@ -135,7 +135,7 @@ public final class GridVisualizer implements Visualizer<MissionOneSolver.Case> {
         GraphicsContext g = canvas.getGraphicsContext2D();
         double w = canvas.getWidth(), h = canvas.getHeight();
 
-        g.setFill(Theme.BG);
+        g.setFill(Theme.PAPER);
         g.fillRect(0, 0, w, h);
         if (current == null) return;
 
@@ -196,13 +196,18 @@ public final class GridVisualizer implements Visualizer<MissionOneSolver.Case> {
                 int cellIndex = grid.index(r, c);
                 double x = originX + c * cell, y = originY + r * cell;
 
-                if (grid.isBomb(cellIndex)) {
-                    g.setFill(Theme.fade(Theme.LIMON, 0.85));
-                    g.fillRoundRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad, arc, arc);
-                    if (cell >= 12) drawBomb(g, x + cell / 2, y + cell / 2, cell * 0.22);
-                } else {
-                    g.setFill(Theme.PANEL_ALT);
-                    g.fillRoundRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad, arc, arc);
+                g.setFill(grid.isBomb(cellIndex) ? Theme.LIMON : Theme.PAPER_DEEP);
+                g.fillRoundRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad, arc, arc);
+
+                // La linea de tinta alrededor de cada casilla es lo que convierte
+                // la cuadricula en un dibujo de comic y no en una hoja de calculo.
+                if (cell >= 7) {
+                    g.setStroke(Theme.INK);
+                    g.setLineWidth(Math.max(1, cell * 0.055));
+                    g.strokeRoundRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad, arc, arc);
+                }
+                if (grid.isBomb(cellIndex) && cell >= 12) {
+                    drawBomb(g, x + cell / 2, y + cell / 2, cell * 0.22);
                 }
             }
         }
@@ -218,12 +223,13 @@ public final class GridVisualizer implements Visualizer<MissionOneSolver.Case> {
             // Las celdas mas recientes brillan mas: eso es lo que dibuja la forma
             // del avance (anillos en BFS, una rama larga en DFS).
             double age = shown <= 1 ? 1 : (double) i / (shown - 1);
-            g.setFill(Theme.fade(tint, 0.20 + 0.55 * age));
+            g.setFill(Theme.fade(tint, 0.35 + 0.60 * age));
             g.fillRoundRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad, arc, arc);
 
-            if (i == shown - 1) {
-                g.setStroke(Theme.TEXT);
-                g.setLineWidth(Math.max(1.2, cell * 0.10));
+            if (cell >= 7) {
+                boolean newest = (i == shown - 1);
+                g.setStroke(Theme.INK);
+                g.setLineWidth(newest ? Math.max(2, cell * 0.13) : Math.max(1, cell * 0.055));
                 g.strokeRoundRect(x + pad, y + pad, cell - 2 * pad, cell - 2 * pad, arc, arc);
             }
         }
@@ -233,15 +239,19 @@ public final class GridVisualizer implements Visualizer<MissionOneSolver.Case> {
         if (current.reachable() && step >= explorationLength) {
             int[] path = result.pathTo(current.end());
             if (path.length > 0) {
-                g.setStroke(Theme.CHURUN);
-                g.setLineWidth(Math.max(2, cell * 0.26));
-                g.beginPath();
-                for (int i = 0; i < path.length; i++) {
-                    double x = originX + grid.colOf(path[i]) * cell + cell / 2;
-                    double y = originY + grid.rowOf(path[i]) * cell + cell / 2;
-                    if (i == 0) g.moveTo(x, y); else g.lineTo(x, y);
+                // Dos pasadas: primero la tinta mas gruesa, luego el color encima.
+                // Es literalmente como se entinta y se colorea una vineta.
+                for (int pass = 0; pass < 2; pass++) {
+                    g.setStroke(pass == 0 ? Theme.INK : Theme.CHURUN);
+                    g.setLineWidth(Math.max(2, cell * (pass == 0 ? 0.38 : 0.24)));
+                    g.beginPath();
+                    for (int i = 0; i < path.length; i++) {
+                        double x = originX + grid.colOf(path[i]) * cell + cell / 2;
+                        double y = originY + grid.rowOf(path[i]) * cell + cell / 2;
+                        if (i == 0) g.moveTo(x, y); else g.lineTo(x, y);
+                    }
+                    g.stroke();
                 }
-                g.stroke();
 
                 if (withWalker) {
                     paintWalker(g, path, step - explorationLength, originX, originY, cell);
@@ -263,7 +273,7 @@ public final class GridVisualizer implements Visualizer<MissionOneSolver.Case> {
         for (int i = 0; i <= at; i++) {
             double x = ox + grid.colOf(path[i]) * cell + cell / 2;
             double y = oy + grid.rowOf(path[i]) * cell + cell / 2;
-            g.setFill(Theme.fade(Theme.TEXT, 0.45));
+            g.setFill(Theme.fade(Theme.INK, 0.45));
             g.fillOval(x - cell * 0.08, y - cell * 0.08, cell * 0.16, cell * 0.16);
         }
 

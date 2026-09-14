@@ -43,7 +43,7 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
     private int step;
 
     public GraphVisualizer() {
-        scoreboard.getStyleClass().addAll("mono", "title");
+        scoreboard.getStyleClass().add("scoreboard");
         legend.getStyleClass().add("caption");
         legend.setText("Nodo resuelto = cian    Ruta mas barata = dorada    S = inicio, D = destino");
 
@@ -120,7 +120,7 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
     private void repaint() {
         GraphicsContext g = canvas.getGraphicsContext2D();
         double w = canvas.getWidth(), h = canvas.getHeight();
-        g.setFill(Theme.BG);
+        g.setFill(Theme.PAPER);
         g.fillRect(0, 0, w, h);
         if (current == null || nodeX.length == 0) return;
 
@@ -137,7 +137,7 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
         for (int e = 0; e < edges.size(); e++) {
             int a = edges.from(e), b = edges.to(e);
             if (a == b) continue;                       // los lazos no se dibujan
-            g.setStroke(Theme.fade(Theme.STROKE, 0.9));
+            g.setStroke(Theme.fade(Theme.INK, 0.9));
             g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
         }
 
@@ -146,14 +146,17 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
         int settledTotal = current.shortestPath().settledCount();
         if (route.length > 0 && step >= settledTotal) {
             int walked = Math.min(route.length, step - settledTotal + 1);
-            g.setStroke(Theme.CHURUN);
-            g.setLineWidth(4.5);
-            g.beginPath();
-            for (int i = 0; i < walked; i++) {
-                if (i == 0) g.moveTo(nodeX[route[i]], nodeY[route[i]]);
-                else g.lineTo(nodeX[route[i]], nodeY[route[i]]);
+            // Dos pasadas: la tinta gruesa debajo, el dorado encima.
+            for (int pass = 0; pass < 2; pass++) {
+                g.setStroke(pass == 0 ? Theme.INK : Theme.CHURUN);
+                g.setLineWidth(pass == 0 ? 9 : 5);
+                g.beginPath();
+                for (int i = 0; i < walked; i++) {
+                    if (i == 0) g.moveTo(nodeX[route[i]], nodeY[route[i]]);
+                    else g.lineTo(nodeX[route[i]], nodeY[route[i]]);
+                }
+                g.stroke();
             }
-            g.stroke();
         }
 
         // 3. Pesos, solo si hay sitio para leerlos, y DESPUES de la ruta: pintados
@@ -167,9 +170,9 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
                 double mx = (nodeX[a] + nodeX[b]) / 2, my = (nodeY[a] + nodeY[b]) / 2;
                 String weight = String.valueOf(edges.weight(e));
                 double chipW = 7 + weight.length() * 6.2;
-                g.setFill(Theme.fade(Theme.BG, 0.85));
+                g.setFill(Theme.fade(Theme.PAPER, 0.85));
                 g.fillRoundRect(mx - chipW / 2, my - 12, chipW, 14, 6, 6);
-                g.setFill(Theme.fade(Theme.MUTED, 0.95));
+                g.setFill(Theme.fade(Theme.INK_SOFT, 0.95));
                 g.fillText(weight, mx, my - 1);
             }
             g.setTextAlign(TextAlignment.LEFT);
@@ -182,14 +185,14 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
             boolean isStart = v == current.start();
             boolean isDest = v == current.destination();
 
-            Color fill = settled[v] ? Theme.MINERVA : Theme.PANEL_ALT;
+            Color fill = settled[v] ? Theme.MINERVA : Theme.PAPER_DEEP;
             if (isStart) fill = Theme.POLA;
             if (isDest) fill = Theme.NINA;
 
             g.setFill(fill);
             g.fillOval(nodeX[v] - radius, nodeY[v] - radius, radius * 2, radius * 2);
-            g.setStroke(Theme.fade(Theme.TEXT, 0.35));
-            g.setLineWidth(1.2);
+            g.setStroke(Theme.INK);
+            g.setLineWidth(2.6);
             g.strokeOval(nodeX[v] - radius, nodeY[v] - radius, radius * 2, radius * 2);
 
             // El ultimo nodo resuelto se resalta: es el que Dijkstra acaba de sacar del heap.
@@ -201,7 +204,7 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
             }
 
             if (radius >= 11) {
-                g.setFill(settled[v] || isStart || isDest ? Color.web("#14121F") : Theme.MUTED);
+                g.setFill(settled[v] || isStart || isDest ? Theme.PAPER : Theme.INK_SOFT);
                 g.fillText(String.valueOf(v), nodeX[v], nodeY[v] + radius * 0.38);
             }
 
@@ -212,7 +215,7 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
                 g.setFont(Font.font(11));
                 double chipW = 8 + cost.length() * 6.4;
                 double chipY = nodeY[v] - radius - 16;
-                g.setFill(Theme.fade(Theme.BG, 0.92));
+                g.setFill(Theme.fade(Theme.PAPER, 0.92));
                 g.fillRoundRect(nodeX[v] - chipW / 2, chipY, chipW, 15, 7, 7);
                 g.setFill(Theme.CHURUN);
                 g.fillText(cost, nodeX[v], chipY + 11);

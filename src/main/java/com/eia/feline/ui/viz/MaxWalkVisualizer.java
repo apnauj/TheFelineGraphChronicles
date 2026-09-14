@@ -46,7 +46,7 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
     private int step;
 
     public MaxWalkVisualizer() {
-        scoreboard.getStyleClass().addAll("mono", "title");
+        scoreboard.getStyleClass().add("scoreboard");
         matrixLabel.getStyleClass().add("section-label");
 
         mismatchBanner.getStyleClass().addAll("banner-error", "text-error");
@@ -142,7 +142,7 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
     private void repaint() {
         GraphicsContext g = canvas.getGraphicsContext2D();
         double w = canvas.getWidth(), h = canvas.getHeight();
-        g.setFill(Theme.BG);
+        g.setFill(Theme.PAPER);
         g.fillRect(0, 0, w, h);
         if (current == null || nodeX.length == 0) return;
 
@@ -154,7 +154,7 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
             int a = edges.from(e), b = edges.to(e);
             if (a == b) continue;
             boolean poisoned = edges.weight(e) < 0;
-            g.setStroke(poisoned ? Theme.fade(Theme.LIMON, 0.8) : Theme.fade(Theme.STROKE, 0.95));
+            g.setStroke(poisoned ? Theme.fade(Theme.LIMON, 0.8) : Theme.fade(Theme.INK, 0.95));
             g.setLineWidth(poisoned ? 1.8 : 1.4);
             g.setLineDashes(poisoned ? new double[]{ 6, 5 } : null);
             drawArrow(g, nodeX[a], nodeY[a], nodeX[b], nodeY[b], radius);
@@ -187,9 +187,9 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
                 double mx = (nodeX[a] + nodeX[b]) / 2, my = (nodeY[a] + nodeY[b]) / 2;
                 String weight = String.valueOf(edges.weight(e));
                 double chipW = 7 + weight.length() * 6.2;
-                g.setFill(Theme.fade(Theme.BG, 0.88));
+                g.setFill(Theme.fade(Theme.PAPER, 0.88));
                 g.fillRoundRect(mx - chipW / 2, my - 12, chipW, 14, 6, 6);
-                g.setFill(edges.weight(e) < 0 ? Theme.LIMON : Theme.fade(Theme.MUTED, 0.95));
+                g.setFill(edges.weight(e) < 0 ? Theme.LIMON : Theme.fade(Theme.INK_SOFT, 0.95));
                 g.fillText(weight, mx, my - 1);
             }
             g.setTextAlign(TextAlignment.LEFT);
@@ -199,18 +199,18 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         g.setFont(Font.font(Math.max(10, radius)));
         g.setTextAlign(TextAlignment.CENTER);
         for (int v = 0; v < current.nodes(); v++) {
-            Color fill = Theme.PANEL_ALT;
+            Color fill = Theme.PAPER_DEEP;
             if (v == current.start()) fill = Theme.POLA;
             else if (v == current.destination()) fill = Theme.NINA;
 
             g.setFill(fill);
             g.fillOval(nodeX[v] - radius, nodeY[v] - radius, radius * 2, radius * 2);
-            g.setStroke(Theme.fade(Theme.TEXT, 0.35));
-            g.setLineWidth(1.2);
+            g.setStroke(Theme.INK);
+            g.setLineWidth(2.6);
             g.strokeOval(nodeX[v] - radius, nodeY[v] - radius, radius * 2, radius * 2);
 
             if (radius >= 10) {
-                g.setFill(fill == Theme.PANEL_ALT ? Theme.MUTED : Color.web("#14121F"));
+                g.setFill(fill == Theme.PAPER_DEEP ? Theme.INK_SOFT : Theme.PAPER);
                 g.fillText(String.valueOf(v), nodeX[v], nodeY[v] + radius * 0.38);
             }
         }
@@ -220,10 +220,14 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
     /** Traza los primeros upTo tramos de un paseo. */
     private void highlightWalk(GraphicsContext g, int[] walk, int upTo, Color tint, double radius) {
         if (walk.length < 2) return;
-        g.setStroke(tint);
-        g.setLineWidth(4.5);
-        for (int i = 0; i < Math.min(upTo, walk.length - 1); i++) {
-            drawArrow(g, nodeX[walk[i]], nodeY[walk[i]], nodeX[walk[i + 1]], nodeY[walk[i + 1]], radius);
+        // Tinta primero, color encima.
+        for (int pass = 0; pass < 2; pass++) {
+            g.setStroke(pass == 0 ? Theme.INK : tint);
+            g.setLineWidth(pass == 0 ? 9 : 5);
+            for (int i = 0; i < Math.min(upTo, walk.length - 1); i++) {
+                drawArrow(g, nodeX[walk[i]], nodeY[walk[i]],
+                        nodeX[walk[i + 1]], nodeY[walk[i + 1]], radius);
+            }
         }
     }
 
