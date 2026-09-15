@@ -65,7 +65,6 @@ public final class LoadingScreen extends StackPane {
 
     private Node hero;
     private Timeline float_;
-    private Timeline churunSway;
 
     /** La portada del arranque: la barra se llena y pasa sola a la seleccion. */
     public static LoadingScreen intro(Runnable onFinished) {
@@ -123,7 +122,7 @@ public final class LoadingScreen extends StackPane {
         footer.setMaxHeight(Region.USE_PREF_SIZE);
         StackPane.setAlignment(footer, Pos.BOTTOM_CENTER);
 
-        getChildren().addAll(backdrop, buildChurun(), buildHero(), heading, footer,
+        getChildren().addAll(backdrop, buildHero(), heading, footer,
                 buildCaption(), buildStolen(), buildPolaLine(), buildVillainLine(),
                 buildKapow(), Music.toggleButton());
         Node musicToggle = getChildren().get(getChildren().size() - 1);
@@ -239,43 +238,6 @@ public final class LoadingScreen extends StackPane {
         head.setAlignment(Pos.CENTER);
         head.setMaxHeight(Region.USE_PREF_SIZE);
         return head;
-    }
-
-    /**
-     * El churun, el tesoro de la historia: apoyado en el suelo junto a Pola.
-     *
-     * Va DETRAS de la heroina en el orden de pintado, asi que asoma por detras en
-     * vez de taparla, y se mece muy despacio. Si el PNG no esta, no se dibuja
-     * nada: es decoracion, no puede romper la portada.
-     */
-    private Node buildChurun() {
-        if (!Art.has("churun")) return new Pane();
-
-        Node churun = Art.portrait("churun", 96, Pane::new);
-        churun.setRotate(-7);
-        churun.setCache(true);
-        churun.setCacheHint(CacheHint.SPEED);
-
-        StackPane holder = new StackPane(churun);
-        holder.setMouseTransparent(true);
-        // A la izquierda de Pola y apoyado en el suelo, no delante de ella: la
-        // heroina ocupa el centro y el churun se le cruzaba por las patas.
-        StackPane.setAlignment(churun, Pos.BOTTOM_LEFT);
-        holder.paddingProperty().bind(javafx.beans.binding.Bindings.createObjectBinding(
-                () -> new Insets(0, 0, getHeight() * (1 - FLOOR) + 10, 286), heightProperty()));
-
-        // Un balanceo lento, para que no parezca pegado con cola.
-        Timeline sway = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(churun.rotateProperty(), -7)),
-                new KeyFrame(Duration.millis(2300),
-                        new KeyValue(churun.rotateProperty(), -1, Interpolator.EASE_BOTH)),
-                new KeyFrame(Duration.millis(4600),
-                        new KeyValue(churun.rotateProperty(), -7, Interpolator.EASE_BOTH)));
-        sway.setCycleCount(Animation.INDEFINITE);
-        sway.play();
-        churunSway = sway;
-
-        return holder;
     }
 
     /** Segundo cartucho de narracion, debajo del primero. */
@@ -405,6 +367,5 @@ public final class LoadingScreen extends StackPane {
 
     private void stopAnimations() {
         if (float_ != null) float_.stop();
-        if (churunSway != null) churunSway.stop();
     }
 }
