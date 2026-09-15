@@ -15,17 +15,14 @@ in the README.
 | 1 — Rescue Nina from the minefield | BFS + DFS on a grid | implemented |
 | 2 — Retrieve the Claude accounts | Dijkstra | implemented |
 | 3 — The ultimate food stash | Floyd-Warshall + Bellman-Ford | implemented |
-| 4 — Reconnect the network | Kruskal + union-find | runs on temporary scaffolding |
+| 4 — Reconnect the network | Kruskal + union-find | implemented |
 
-**Mission 3 is finished; Mission 4 is not.** `MissionThreeSolver.solve` calls `algo/maxwalk/FloydWarshall`
-and `algo/maxwalk/BellmanFord` directly, `ui/viz/MatrixPane` reads `FloydWarshall.NONE` for its sentinel,
-and `Missions.three()` has `implemented = true` — no stub involved anywhere for Mission 3 anymore, and
-`missions/stub/ReferenceMaxWalk` was deleted. Mission 4 still works end to end and produces the
-statement's expected output, but its algorithm lives in `missions/stub/ReferenceMst` and is a placeholder
-written so the GUI could be built and demonstrated while another member writes the real one. `algo/mst/`
-is deliberately empty and reserved for it. When it lands: change the one call in `MissionFourSolver.solve`,
-delete `missions/stub/` entirely (only `ReferenceMst` is left in it), and flip `implemented` to `true` in
-`ui/screen/Missions.java`'s `four()`. No screen or visualizer changes.
+**All four missions are finished.** Each solver calls its real algorithm directly:
+`MissionThreeSolver.solve` calls `algo/maxwalk/FloydWarshall` and `algo/maxwalk/BellmanFord`,
+`MissionFourSolver.solve` calls `algo/mst/Kruskal`. `Missions.all()` has `implemented = true` for all
+four descriptors, so no mission shows the "andamiaje temporal" banner anymore. The `missions/stub/`
+package that held the placeholder implementations while the GUI was being built (`ReferenceMaxWalk`,
+then `ReferenceMst`) has been deleted entirely — there is nothing left to promote from it.
 
 ## Commands
 
@@ -54,12 +51,11 @@ algo/       pure algorithms. No JavaFX, Swing or AWT import — enforced by Algo
   grid/     GridGraph — the Mission 1 board as a graph
   search/   BFS · DFS · SearchResult
   sp/       Dijkstra · ShortestPathResult
-  maxwalk/  FloydWarshall · AllPairsResult · BellmanFord · MaxWalkResult — Mission 3, real
-  mst/      Mission 4 slot (empty, reserved)
+  maxwalk/  FloydWarshall · AllPairsResult · BellmanFord · MaxWalkResult — Mission 3
+  mst/      Kruskal (with a nested UnionFind) · MstResult — Mission 4
 
 missions/   text in → exact output lines + structured payload out. Still no UI imports.
   Tokenizer · InputFormatException · MissionSolver · CaseResult · MissionOneSolver … MissionFourSolver
-  stub/     ReferenceMst: TEMPORARY scaffolding for mission 4 — see its README.
 
 ui/         the only package allowed to import JavaFX.
   theme/    Theme.java + theme.css — the palette, defined once in two formats

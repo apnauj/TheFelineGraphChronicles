@@ -1,38 +1,36 @@
-package com.eia.feline.missions.stub;
+package com.eia.feline.algo.mst;
 
 import com.eia.feline.algo.graph.EdgeList;
 
+import java.util.Arrays;
+
 /**
- * ANDAMIAJE TEMPORAL -- ver el README de este paquete.
+ * Kruskal con union-find para la Mision 4: el costo minimo para conectar todas
+ * las intersecciones con los cables disponibles (Arbol de Expansion Minima).
  *
- * Kruskal con union-find para la Mision 4, escrito solo para poder construir y
- * demostrar la interfaz. La version definitiva la escribe otro integrante en
- * com.eia.feline.algo.mst y esta clase se borra.
+ * POR QUE KRUSKAL EN LA MISION 4: el problema pide exactamente eso -- conectar
+ * todos los nodos de un grafo no dirigido y ponderado con el menor costo total
+ * y sin ciclos. Kruskal es greedy sobre las aristas ordenadas por costo: un
+ * cable entra al arbol si y solo si sus dos extremos todavia no estan
+ * conectados, y el union-find responde esa pregunta (y aplica la union) en
+ * tiempo casi constante amortizado.
  *
- * Complejidad: O(C log C), dominada por ordenar los cables. El union-find con
- * compresion de caminos y union por tamano responde en tiempo practicamente
- * constante amortizado.
+ * Complejidad: O(C log C) tiempo, dominado por ordenar los C cables (las
+ * operaciones de union-find con compresion de caminos y union por tamano son
+ * practicamente O(1) amortizado). Espacio: O(N + C).
  */
-public final class ReferenceMst {
+public final class Kruskal {
 
-    private ReferenceMst() {}
+    private Kruskal() {}
 
-    /**
-     * @param order    indices de los cables en el orden en que Kruskal los examina
-     * @param accepted accepted[i] indica si el cable order[i] entro en el arbol
-     * @param total    costo total del arbol, valido solo si connected es true
-     */
-    public record Result(int[] order, boolean[] accepted, long total, boolean connected,
-                         int components) {}
-
-    public static Result kruskal(int nodes, EdgeList cables) {
+    public static MstResult run(int nodes, EdgeList cables) {
         int m = cables.size();
 
         // Ordenar por costo: se ordenan los INDICES para no mover las aristas, que
         // la visualizacion necesita en su posicion original.
         Integer[] boxed = new Integer[m];
         for (int i = 0; i < m; i++) boxed[i] = i;
-        java.util.Arrays.sort(boxed, (a, b) -> Long.compare(cables.weight(a), cables.weight(b)));
+        Arrays.sort(boxed, (a, b) -> Long.compare(cables.weight(a), cables.weight(b)));
 
         int[] order = new int[m];
         for (int i = 0; i < m; i++) order[i] = boxed[i];
@@ -55,7 +53,7 @@ public final class ReferenceMst {
         }
 
         int components = nodes - joined;
-        return new Result(order, accepted, total, components == 1, components);
+        return new MstResult(order, accepted, total, components == 1, components);
     }
 
     /** Union-find con compresion de caminos y union por tamano. */

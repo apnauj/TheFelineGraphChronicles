@@ -1,7 +1,8 @@
 package com.eia.feline.missions;
 
 import com.eia.feline.algo.graph.EdgeList;
-import com.eia.feline.missions.stub.ReferenceMst;
+import com.eia.feline.algo.mst.Kruskal;
+import com.eia.feline.algo.mst.MstResult;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,10 +13,7 @@ import java.util.List;
 /**
  * Mision 4 -- reconectar la red (Kruskal con union-find).
  *
- * ATENCION: el algoritmo viene por ahora de
- * com.eia.feline.missions.stub.ReferenceMst, que es andamiaje temporal para
- * poder construir la interfaz. Cuando llegue la implementacion definitiva en
- * com.eia.feline.algo.mst, lo unico que cambia es la llamada de solve().
+ * El algoritmo vive en su lugar definitivo, com.eia.feline.algo.mst.Kruskal.
  *
  * Formato de entrada:
  *   T
@@ -84,7 +82,7 @@ public final class MissionFourSolver implements MissionSolver<MissionFourSolver.
                 cables.add(a, b, cost);
             }
 
-            ReferenceMst.Result mst = ReferenceMst.kruskal(nodes, cables);
+            MstResult mst = Kruskal.run(nodes, cables);
 
             String line = mst.connected()
                     ? "Case #" + k + ": " + mst.total()
