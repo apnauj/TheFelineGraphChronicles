@@ -10,9 +10,9 @@ Lenguajes y Compiladores — Universidad EIA.
 
 | Nombre | Rol en la entrega |
 |---|---|
-| Juan Pablo Alzate | _(completar)_ |
-| _(completar)_ | _(completar)_ |
-| _(completar)_ | _(completar)_ |
+| Juan Pablo Alzate | 
+|Jeronimo Duque Ruiz |
+
 
 ## Como compilar y ejecutar
 
