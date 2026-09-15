@@ -18,6 +18,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Dibujo de la Mision 2: la red, los nodos que Dijkstra va resolviendo y la ruta
  * mas barata.
@@ -44,6 +47,10 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
     private double[] nodeX = new double[0];
     private double[] nodeY = new double[0];
     private int step;
+
+    /** Para cada arista: en que carril de su par (a,b) le toca, y cuantas comparten ese par. */
+    private int[] edgeSlot = new int[0];
+    private int[] edgeGroupSize = new int[0];
 
     /** true en cuanto el usuario arrastra un nodo: el proximo resize ya no debe pisarle el layout. */
     private boolean manualLayout;
@@ -110,11 +117,71 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
         this.step = 0;
         this.manualLayout = false;
         interaction.resetView();
+        computeEdgeSlots();
         scoreboard.setText(c.reachable()
                 ? "Costo minimo: " + c.cost()
                 : "Nina is very sad");
         scoreboard.setTextFill(c.reachable() ? Theme.CHURUN : Theme.LIMON);
         relayout();
+    }
+
+    /**
+     * El enunciado permite conexiones repetidas entre el mismo par de nodos (se
+     * guardan todas, sin deduplicar). Dibujadas como rectas quedarian exactamente
+     * una encima de otra y solo se veria la ultima. Aqui se numera cada arista
+     * dentro de su par -- "carril" 0, 1, 2... -- para que quien dibuja sepa
+     * cuantas comparten el par y en que carril le toca curvarse a cada una.
+     */
+    private void computeEdgeSlots() {
+        EdgeList edges = current.edges();
+        int m = edges.size();
+        edgeSlot = new int[m];
+        edgeGroupSize = new int[m];
+
+        Map<Long, Integer> countSoFar = new HashMap<>();
+        for (int e = 0; e < m; e++) {
+            long key = pairKey(edges.from(e), edges.to(e));
+            edgeSlot[e] = countSoFar.merge(key, 1, Integer::sum) - 1;
+        }
+        for (int e = 0; e < m; e++) {
+            edgeGroupSize[e] = countSoFar.get(pairKey(edges.from(e), edges.to(e)));
+        }
+    }
+
+    /** Clave canonica de un par no ordenado, empaquetada en un long (igual que en SpringLayout). */
+    private static long pairKey(int a, int b) {
+        int lo = Math.min(a, b), hi = Math.max(a, b);
+        return ((long) lo << 32) | (hi & 0xFFFFFFFFL);
+    }
+
+    /**
+     * Punto de control de la curva entre a y b para el carril que le toco. Si es
+     * la unica arista de su par, el "control" es el propio punto medio -- eso es
+     * lo que hace que se dibuje recta.
+     *
+     * La perpendicular se toma SIEMPRE en el sentido canonico (del indice menor
+     * al mayor) y solo despues se elige el lado segun el carril: si se tomara en
+     * el sentido de la arista, una arista a->b y su gemela b->a invertirian el
+     * vector Y el lado a la vez, los dos signos se cancelarian, y las dos
+     * curvas caerian una encima de la otra otra vez.
+     */
+    private double[] controlPoint(int a, int b, int slot, int groupSize, double radius) {
+        double mx = (nodeX[a] + nodeX[b]) / 2, my = (nodeY[a] + nodeY[b]) / 2;
+        if (groupSize <= 1) return new double[]{ mx, my };
+
+        int lo = Math.min(a, b), hi = Math.max(a, b);
+        double dx = nodeX[hi] - nodeX[lo], dy = nodeY[hi] - nodeY[lo];
+        double len = Math.max(1e-6, Math.hypot(dx, dy));
+        double px = -dy / len, py = dx / len;
+
+        // Carriles alternados y crecientes: 0 -> +1, 1 -> -1, 2 -> +2, 3 -> -2...
+        // Se acota la magnitud para que un par con muchas aristas repetidas no
+        // termine con una curva absurdamente ancha.
+        int magnitude = Math.min(6, slot / 2 + 1);
+        double sign = (slot % 2 == 0) ? 1 : -1;
+        double offset = sign * magnitude * (radius * 1.6 + 18);
+
+        return new double[]{ mx + px * offset, my + py * offset };
     }
 
     @Override
@@ -167,13 +234,23 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
 
         double radius = currentRadius();
 
-        // 1. Todas las conexiones, apagadas.
+        // 1. Todas las conexiones, apagadas. Si dos o mas comparten el mismo par
+        //    de nodos se curvan en carriles distintos; si no, van rectas.
         g.setLineWidth(1.4);
+        g.setStroke(Theme.fade(Theme.INK, 0.9));
         for (int e = 0; e < edges.size(); e++) {
             int a = edges.from(e), b = edges.to(e);
             if (a == b) continue;                       // los lazos no se dibujan
-            g.setStroke(Theme.fade(Theme.INK, 0.9));
-            g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+            int groupSize = edgeGroupSize[e];
+            if (groupSize <= 1) {
+                g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+            } else {
+                double[] ctrl = controlPoint(a, b, edgeSlot[e], groupSize, radius);
+                g.beginPath();
+                g.moveTo(nodeX[a], nodeY[a]);
+                g.quadraticCurveTo(ctrl[0], ctrl[1], nodeX[b], nodeY[b]);
+                g.stroke();
+            }
         }
 
         // 2. La ruta mas barata, una vez terminada la exploracion.
@@ -202,7 +279,12 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
             for (int e = 0; e < edges.size(); e++) {
                 int a = edges.from(e), b = edges.to(e);
                 if (a == b) continue;
-                double mx = (nodeX[a] + nodeX[b]) / 2, my = (nodeY[a] + nodeY[b]) / 2;
+                // Sobre la curva real y no sobre el punto medio de la recta: con
+                // una arista curva, B(0.5) = mid + 0.5*(control - mid). Con una
+                // sola arista en el par, control == mid y da lo mismo de siempre.
+                double[] ctrl = controlPoint(a, b, edgeSlot[e], edgeGroupSize[e], radius);
+                double mx = (nodeX[a] + nodeX[b]) / 2 + 0.5 * (ctrl[0] - (nodeX[a] + nodeX[b]) / 2);
+                double my = (nodeY[a] + nodeY[b]) / 2 + 0.5 * (ctrl[1] - (nodeY[a] + nodeY[b]) / 2);
                 String weight = String.valueOf(edges.weight(e));
                 double chipW = 7 + weight.length() * 6.2;
                 g.setFill(Theme.fade(Theme.PAPER, 0.85));
