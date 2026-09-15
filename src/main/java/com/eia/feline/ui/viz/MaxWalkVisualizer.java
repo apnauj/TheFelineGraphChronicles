@@ -9,6 +9,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -60,8 +61,22 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         canvasHolder.widthProperty().addListener((o, a, b) -> relayout());
         canvasHolder.heightProperty().addListener((o, a, b) -> relayout());
 
+        // La matriz va AL LADO y no debajo. Debajo se comia unos 200 px de alto y
+        // al grafo le quedaba un recuadro ancho y bajo, que es la peor forma
+        // posible para un grafo. Al lado, el grafo gana altura y la matriz, que se
+        // desplaza, no la echa de menos.
+        VBox matrixColumn = new VBox(6, matrixLabel, matrix.node());
+        matrixColumn.setMinWidth(300);
+        matrixColumn.setPrefWidth(340);
+        matrixColumn.setMaxWidth(380);
+        VBox.setVgrow(matrix.node(), Priority.ALWAYS);
+
+        HBox split = new HBox(12, canvasHolder, matrixColumn);
+        HBox.setHgrow(canvasHolder, Priority.ALWAYS);
+        VBox.setVgrow(split, Priority.ALWAYS);
+
         root.setPadding(new Insets(12));
-        root.getChildren().addAll(scoreboard, mismatchBanner, canvasHolder, matrixLabel, matrix.node());
+        root.getChildren().addAll(scoreboard, mismatchBanner, split);
     }
 
     @Override
@@ -151,7 +166,12 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
      */
     private double nodeRadius() {
         int n = (current == null) ? 8 : current.nodes();
-        return Math.max(13, Math.min(26, 420.0 / Math.max(5, n)));
+        double byCount = 420.0 / Math.max(5, n);
+        // Y tambien del tamano del lienzo: un nodo de 26 px en un recuadro de 300
+        // ocupa una decima parte del ancho y no queda sitio para las aristas.
+        double side = Math.min(Math.max(1, canvas.getWidth()), Math.max(1, canvas.getHeight()));
+        double byCanvas = side / 11.0;
+        return Math.max(9, Math.min(26, Math.min(byCount, byCanvas)));
     }
 
     private void repaint() {

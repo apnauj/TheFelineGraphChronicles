@@ -103,6 +103,21 @@ pinta con JavaFX. Lo unico de terceros son **dos tipografias**, incrustadas en
 | Fredoka | texto de interfaz | SIL Open Font License 1.1 |
 
 La OFL permite incrustarlas y redistribuirlas. El aviso esta en `fonts/OFL.txt`.
+
+**La musica no es de terceros: la genera el propio proyecto.** El tema en bucle
+(`ui/audio/theme.wav`, 9,6 s) lo sintetiza `tools/ThemeSynth.java`, un
+generador que escribe el WAV nota a nota -- progresion i-VI-III-VII en re menor,
+bajo en onda cuadrada, acordes y melodia con envolvente. Se ejecuta a mano solo
+si hay que regenerarlo:
+
+```bash
+javac tools/ThemeSynth.java -d /tmp/synth
+java -cp /tmp/synth ThemeSynth src/main/resources/com/eia/feline/ui/audio/theme.wav
+```
+
+Suena con `javax.sound.sampled` (biblioteca estandar), no con `javafx.media`, para
+no anadir otro modulo al pom. Si la maquina no tiene sonido, falla en silencio y
+la aplicacion funciona igual. Hay un boton para silenciarla.
 Si faltaran, la aplicacion cae a una familia del sistema y sigue funcionando (ver
 `ui/theme/Fonts.java`).
 

@@ -122,7 +122,17 @@ public final class MissionScreen<P> extends BorderPane {
     // ------------------------------------------------------------------ cuerpo
 
     private Node body() {
-        HBox columns = new HBox(16, inputPanel(), canvasPanel(), outputPanel());
+        // DOS columnas, no tres. Con entrada, dibujo y salida en paralelo, al
+        // dibujo le quedaban unos 470 px de ancho y los grafos salian apretados:
+        // los nodos casi encimados y las etiquetas de peso unas sobre otras.
+        // Apilando entrada y salida en una columna estrecha, el dibujo pasa de
+        // ~470 a ~850 px, que es donde el grafo empieza a leerse.
+        VBox side = new VBox(14, inputPanel(), outputPanel());
+        side.setPrefWidth(330);
+        side.setMinWidth(280);
+        side.setMaxWidth(360);
+
+        HBox columns = new HBox(16, side, canvasPanel());
         HBox.setHgrow(columns.getChildren().get(1), Priority.ALWAYS);
         return columns;
     }
@@ -151,9 +161,8 @@ public final class MissionScreen<P> extends BorderPane {
 
         VBox panel = new VBox(10, label, input, actions);
         panel.getStyleClass().add("panel");
-        panel.setPadding(new Insets(16));
-        panel.setPrefWidth(340);
-        panel.setMinWidth(280);
+        panel.setPadding(new Insets(14));
+        VBox.setVgrow(panel, Priority.ALWAYS);
         return panel;
     }
 
@@ -168,10 +177,10 @@ public final class MissionScreen<P> extends BorderPane {
         banner.setVisible(false);
         banner.setManaged(false);
 
-        VBox panel = new VBox(10, label, banner, canvasHolder);
+        VBox panel = new VBox(8, label, banner, canvasHolder);
         panel.getStyleClass().add("panel");
-        panel.setPadding(new Insets(16));
-        panel.setMinWidth(320);
+        panel.setPadding(new Insets(14));
+        panel.setMinWidth(420);
         return panel;
     }
 
@@ -196,11 +205,11 @@ public final class MissionScreen<P> extends BorderPane {
             if (i >= 0 && i < results.size()) draw(results.get(i).payload());
         });
 
-        VBox panel = new VBox(10, label, note, output, caseLabel, caseChooser);
+        VBox panel = new VBox(8, label, note, output, caseLabel, caseChooser);
         panel.getStyleClass().add("panel");
-        panel.setPadding(new Insets(16));
-        panel.setPrefWidth(320);
-        panel.setMinWidth(260);
+        panel.setPadding(new Insets(14));
+        output.setPrefRowCount(7);
+        VBox.setVgrow(panel, Priority.ALWAYS);
         return panel;
     }
 

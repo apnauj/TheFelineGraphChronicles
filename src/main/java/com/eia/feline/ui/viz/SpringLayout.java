@@ -23,6 +23,9 @@ import java.util.Set;
  */
 public final class SpringLayout {
 
+    /** Cuanto puede estirarse un eje respecto al otro al encajar en el recuadro. */
+    private static final double MAX_STRETCH = 2.2;
+
     private SpringLayout() {}
 
     /**
@@ -110,7 +113,15 @@ public final class SpringLayout {
         }
 
         double[][] placed = scale(x, y, width, height, margin);
-        separate(placed[0], placed[1], minSeparation, width, height, margin);
+
+        // La separacion pedida se recorta a lo que el lienzo puede dar de si.
+        // Si se exige mas de lo que cabe, la pasada de separacion empuja a todos
+        // contra los bordes, se pelea con el recorte al rectangulo y el resultado
+        // es peor que no separar nada: un amasijo pegado al marco.
+        double usableW = Math.max(1, width - 2 * margin);
+        double usableH = Math.max(1, height - 2 * margin);
+        double affordable = Math.sqrt((usableW * usableH) / n) * 0.85;
+        separate(placed[0], placed[1], Math.min(minSeparation, affordable), width, height, margin);
         return placed;
     }
 
@@ -176,16 +187,32 @@ public final class SpringLayout {
         double spanY = Math.max(1e-6, maxY - minY);
         double usableW = Math.max(1, width - 2 * margin);
         double usableH = Math.max(1, height - 2 * margin);
-        double factor = Math.min(usableW / spanX, usableH / spanY);
 
-        // Centrado: lo que sobre del eje mas holgado se reparte a los dos lados.
-        double offsetX = margin + (usableW - spanX * factor) / 2.0;
-        double offsetY = margin + (usableH - spanY * factor) / 2.0;
+        // Cada eje se escala por su cuenta, pero con un tope de deformacion.
+        //
+        // Conservar la proporcion exacta parecia lo correcto y dejaba el dibujo
+        // apinado: en un recuadro ancho y bajo, un grafo de forma cuadrada se
+        // escala segun la ALTURA -- el lado que aprieta -- y todo el ancho
+        // sobrante se queda vacio, con los nodos amontonados en el centro.
+        //
+        // Estirando el eje holgado hasta MAX_STRETCH veces el otro, el grafo se
+        // reparte por el recuadro. Como los nodos se siguen dibujando redondos,
+        // lo unico que se deforma son las distancias, y a 2,2x no se nota.
+        double fx = usableW / spanX;
+        double fy = usableH / spanY;
+        double base = Math.min(fx, fy);
+        double cap = base * MAX_STRETCH;
+        fx = Math.min(fx, cap);
+        fy = Math.min(fy, cap);
+
+        // Centrado: lo que sobre en cada eje se reparte a los dos lados.
+        double offsetX = margin + (usableW - spanX * fx) / 2.0;
+        double offsetY = margin + (usableH - spanY * fy) / 2.0;
 
         double[] outX = new double[n], outY = new double[n];
         for (int i = 0; i < n; i++) {
-            outX[i] = offsetX + (x[i] - minX) * factor;
-            outY[i] = offsetY + (y[i] - minY) * factor;
+            outX[i] = offsetX + (x[i] - minX) * fx;
+            outY[i] = offsetY + (y[i] - minY) * fy;
         }
         return new double[][]{ outX, outY };
     }

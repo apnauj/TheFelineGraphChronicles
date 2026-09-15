@@ -92,6 +92,14 @@
     -fx-text-fill: -ink;
 }
 
+.speech-text {
+    -fx-font-family: "Bangers";
+    -fx-font-size: 16px;
+    -fx-text-fill: -ink;
+    -fx-text-alignment: center;
+    -fx-line-spacing: 1;
+}
+
 /* ---------- vinetas ---------- */
 
 /*
