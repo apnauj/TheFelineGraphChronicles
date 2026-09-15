@@ -45,6 +45,9 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
     private double[] nodeY = new double[0];
     private int step;
 
+    /** Carril de cada arista dentro de su par (a,b), para curvar las repetidas. */
+    private EdgeCurves.Lanes lanes = new EdgeCurves.Lanes(new int[0], new int[0]);
+
     /** true en cuanto el usuario arrastra un nodo: el proximo resize ya no debe pisarle el layout. */
     private boolean manualLayout;
 
@@ -110,6 +113,7 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
         this.step = 0;
         this.manualLayout = false;
         interaction.resetView();
+        this.lanes = EdgeCurves.computeLanes(c.edges());
         scoreboard.setText(c.reachable()
                 ? "Costo minimo: " + c.cost()
                 : "Nina is very sad");
@@ -167,13 +171,24 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
 
         double radius = currentRadius();
 
-        // 1. Todas las conexiones, apagadas.
+        // 1. Todas las conexiones, apagadas. Si dos o mas comparten el mismo par
+        //    de nodos se curvan en carriles distintos; si no, van rectas.
         g.setLineWidth(1.4);
+        g.setStroke(Theme.fade(Theme.INK, 0.9));
         for (int e = 0; e < edges.size(); e++) {
             int a = edges.from(e), b = edges.to(e);
             if (a == b) continue;                       // los lazos no se dibujan
-            g.setStroke(Theme.fade(Theme.INK, 0.9));
-            g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+            int groupSize = lanes.groupSizes()[e];
+            if (groupSize <= 1) {
+                g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+            } else {
+                double[] ctrl = EdgeCurves.controlPoint(a, b, nodeX[a], nodeY[a], nodeX[b], nodeY[b],
+                        lanes.slots()[e], groupSize, radius);
+                g.beginPath();
+                g.moveTo(nodeX[a], nodeY[a]);
+                g.quadraticCurveTo(ctrl[0], ctrl[1], nodeX[b], nodeY[b]);
+                g.stroke();
+            }
         }
 
         // 2. La ruta mas barata, una vez terminada la exploracion.
@@ -202,7 +217,12 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
             for (int e = 0; e < edges.size(); e++) {
                 int a = edges.from(e), b = edges.to(e);
                 if (a == b) continue;
-                double mx = (nodeX[a] + nodeX[b]) / 2, my = (nodeY[a] + nodeY[b]) / 2;
+                // Sobre la curva real y no sobre el punto medio de la recta -- con
+                // una sola arista en el par da exactamente el punto medio de siempre.
+                double[] ctrl = EdgeCurves.controlPoint(a, b, nodeX[a], nodeY[a], nodeX[b], nodeY[b],
+                        lanes.slots()[e], lanes.groupSizes()[e], radius);
+                double[] mid = EdgeCurves.midpoint(nodeX[a], nodeY[a], nodeX[b], nodeY[b], ctrl);
+                double mx = mid[0], my = mid[1];
                 String weight = String.valueOf(edges.weight(e));
                 double chipW = 7 + weight.length() * 6.2;
                 g.setFill(Theme.fade(Theme.PAPER, 0.85));

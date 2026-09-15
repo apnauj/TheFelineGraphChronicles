@@ -53,6 +53,9 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
     private double[] nodeY = new double[0];
     private int step;
 
+    /** Carril de cada pasadizo dentro de su par (a,b), para curvar los repetidos (a->b y b->a incluidos). */
+    private EdgeCurves.Lanes lanes = new EdgeCurves.Lanes(new int[0], new int[0]);
+
     /** true en cuanto el usuario arrastra un nodo: el proximo resize ya no debe pisarle el layout. */
     private boolean manualLayout;
 
@@ -133,6 +136,7 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         this.step = 0;
         this.manualLayout = false;
         interaction.resetView();
+        this.lanes = EdgeCurves.computeLanes(c.edges());
 
         switch (c.outcome()) {
             case BLOCKED -> {
@@ -219,7 +223,9 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         EdgeList edges = current.edges();
         double radius = nodeRadius();
 
-        // 1. Los pasadizos, con punta de flecha porque son dirigidos.
+        // 1. Los pasadizos, con punta de flecha porque son dirigidos. Si dos o mas
+        //    comparten el mismo par -- incluido un sentido y el opuesto, a->b y
+        //    b->a -- se curvan en carriles distintos; si no, van rectos.
         for (int e = 0; e < edges.size(); e++) {
             int a = edges.from(e), b = edges.to(e);
             if (a == b) continue;
@@ -227,7 +233,7 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
             g.setStroke(poisoned ? Theme.fade(Theme.LIMON, 0.8) : Theme.fade(Theme.INK, 0.95));
             g.setLineWidth(poisoned ? 1.8 : 1.4);
             g.setLineDashes(poisoned ? new double[]{ 6, 5 } : null);
-            drawArrow(g, nodeX[a], nodeY[a], nodeX[b], nodeY[b], radius);
+            drawArrow(g, a, b, lanes.slots()[e], lanes.groupSizes()[e], radius);
         }
         g.setLineDashes((double[]) null);
 
@@ -254,22 +260,32 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
             for (int e = 0; e < edges.size(); e++) {
                 int a = edges.from(e), b = edges.to(e);
                 if (a == b) continue;
-                // La etiqueta se aparta PERPENDICULARMENTE a la arista en vez de
-                // ir en su punto medio: encima de la linea la tapaba la ruta
-                // dorada, y en pares con dos aristas (a->b y b->a) las dos
-                // etiquetas caian en el mismo pixel. Cada sentido se desplaza a
-                // un lado distinto, asi que ambas se leen.
-                // La perpendicular se toma SIEMPRE en el sentido canonico (del
-                // indice menor al mayor) y solo despues se elige el lado. Tomarla
-                // en el sentido de la arista invertia el vector Y el lado a la vez,
-                // los dos signos se cancelaban, y las etiquetas de a->b y b->a
-                // acababan en el mismo pixel: una tapaba a la otra.
-                int lo = Math.min(a, b), hi = Math.max(a, b);
-                double ex = nodeX[hi] - nodeX[lo], ey = nodeY[hi] - nodeY[lo];
-                double len = Math.max(1e-6, Math.hypot(ex, ey));
-                double offset = 14 * ((a < b) ? 1 : -1);
-                double mx = (nodeX[a] + nodeX[b]) / 2 - ey / len * offset;
-                double my = (nodeY[a] + nodeY[b]) / 2 + ex / len * offset;
+
+                double mx, my;
+                int groupSize = lanes.groupSizes()[e];
+                if (groupSize <= 1) {
+                    // La etiqueta se aparta PERPENDICULARMENTE a la arista en vez de
+                    // ir en su punto medio: encima de la linea la tapaba la ruta
+                    // dorada. La perpendicular se toma SIEMPRE en el sentido
+                    // canonico (del indice menor al mayor) y solo despues se elige
+                    // el lado; tomarla en el sentido de la arista invertiria el
+                    // vector Y el lado a la vez y el desplazamiento se cancelaria.
+                    int lo = Math.min(a, b), hi = Math.max(a, b);
+                    double ex = nodeX[hi] - nodeX[lo], ey = nodeY[hi] - nodeY[lo];
+                    double len = Math.max(1e-6, Math.hypot(ex, ey));
+                    double offset = 14 * ((a < b) ? 1 : -1);
+                    mx = (nodeX[a] + nodeX[b]) / 2 - ey / len * offset;
+                    my = (nodeY[a] + nodeY[b]) / 2 + ex / len * offset;
+                } else {
+                    // Con dos o mas pasadizos en el par (a->b y b->a incluidos), cada
+                    // uno ya tiene su propia curva: la etiqueta se pone sobre la
+                    // curva real de la SUYA, y con eso quedan separadas solas.
+                    double[] ctrl = EdgeCurves.controlPoint(a, b, nodeX[a], nodeY[a], nodeX[b], nodeY[b],
+                            lanes.slots()[e], groupSize, radius);
+                    double[] mid = EdgeCurves.midpoint(nodeX[a], nodeY[a], nodeX[b], nodeY[b], ctrl);
+                    mx = mid[0];
+                    my = mid[1];
+                }
 
                 String weight = String.valueOf(edges.weight(e));
                 double chipW = 9 + weight.length() * 7.0;
@@ -304,7 +320,14 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         g.setTextAlign(TextAlignment.LEFT);
     }
 
-    /** Traza los primeros upTo tramos de un paseo. */
+    /**
+     * Traza los primeros upTo tramos de un paseo, cada uno siguiendo la curva
+     * real del pasadizo que le corresponde -- asi, si el tramo comparte su par de
+     * nodos con otro pasadizo (el caso tipico: el propio ciclo de ganancia
+     * positiva, que va y vuelve entre los mismos dos nodos), el resaltado no
+     * corta en linea recta por el medio de las dos curvas sino que se pega a la
+     * que realmente forma la ruta o el ciclo.
+     */
     private void highlightWalk(GraphicsContext g, int[] walk, int upTo, Color tint, double radius) {
         if (walk.length < 2) return;
         // Tinta primero, color encima.
@@ -312,27 +335,79 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
             g.setStroke(pass == 0 ? Theme.INK : tint);
             g.setLineWidth(pass == 0 ? 9 : 5);
             for (int i = 0; i < Math.min(upTo, walk.length - 1); i++) {
-                drawArrow(g, nodeX[walk[i]], nodeY[walk[i]],
-                        nodeX[walk[i + 1]], nodeY[walk[i + 1]], radius);
+                int e = bestEdgeFor(walk[i], walk[i + 1]);
+                if (e >= 0) {
+                    drawArrow(g, walk[i], walk[i + 1], lanes.slots()[e], lanes.groupSizes()[e], radius);
+                } else {
+                    drawArrow(g, walk[i], walk[i + 1], 0, 1, radius);
+                }
             }
         }
     }
 
-    /** Linea con punta de flecha, recortada para no quedar tapada por el nodo destino. */
-    private void drawArrow(GraphicsContext g, double x1, double y1, double x2, double y2, double radius) {
-        double dx = x2 - x1, dy = y2 - y1;
-        double length = Math.max(1e-6, Math.hypot(dx, dy));
-        double ux = dx / length, uy = dy / length;
+    /**
+     * El indice del pasadizo de from a to que probablemente uso Bellman-Ford: si
+     * hay varios (mismo par, mismo sentido, distinto peso), se prefiere el de
+     * mayor peso, porque asi es como relaja al maximizar. Si no hay ninguno
+     * (no deberia pasar, pero la ruta viene de otro algoritmo) devuelve -1.
+     */
+    private int bestEdgeFor(int from, int to) {
+        EdgeList edges = current.edges();
+        int best = -1;
+        long bestWeight = Long.MIN_VALUE;
+        for (int e = 0; e < edges.size(); e++) {
+            if (edges.from(e) == from && edges.to(e) == to && edges.weight(e) > bestWeight) {
+                best = e;
+                bestWeight = edges.weight(e);
+            }
+        }
+        return best;
+    }
 
-        double endX = x2 - ux * (radius + 2);
-        double endY = y2 - uy * (radius + 2);
-        g.strokeLine(x1 + ux * radius, y1 + uy * radius, endX, endY);
+    /**
+     * Flecha de a a b, recortada para no quedar tapada por los nodos. Recta si es
+     * la unica de su par; si comparte el par con otras (incluida la gemela en
+     * sentido opuesto), sigue la curva de su carril y la cabeza de flecha se
+     * orienta segun la tangente real de la curva, no segun la recta a-b.
+     */
+    private void drawArrow(GraphicsContext g, int a, int b, int slot, int groupSize, double radius) {
+        double ax = nodeX[a], ay = nodeY[a], bx = nodeX[b], by = nodeY[b];
 
+        if (groupSize <= 1) {
+            double dx = bx - ax, dy = by - ay;
+            double length = Math.max(1e-6, Math.hypot(dx, dy));
+            double ux = dx / length, uy = dy / length;
+            double endX = bx - ux * (radius + 2), endY = by - uy * (radius + 2);
+            g.strokeLine(ax + ux * radius, ay + uy * radius, endX, endY);
+            strokeArrowHead(g, endX, endY, Math.atan2(uy, ux));
+            return;
+        }
+
+        double[] ctrl = EdgeCurves.controlPoint(a, b, ax, ay, bx, by, slot, groupSize, radius);
+
+        // Direccion de salida en a: hacia el punto de control.
+        double sx = ctrl[0] - ax, sy = ctrl[1] - ay;
+        double slen = Math.max(1e-6, Math.hypot(sx, sy));
+        double startX = ax + sx / slen * radius, startY = ay + sy / slen * radius;
+
+        // Direccion de llegada en b: desde el punto de control (tangente real de
+        // la curva en ese extremo, no la recta a-b).
+        double ex = bx - ctrl[0], ey = by - ctrl[1];
+        double elen = Math.max(1e-6, Math.hypot(ex, ey));
+        double endX = bx - ex / elen * (radius + 2), endY = by - ey / elen * (radius + 2);
+
+        g.beginPath();
+        g.moveTo(startX, startY);
+        g.quadraticCurveTo(ctrl[0], ctrl[1], endX, endY);
+        g.stroke();
+        strokeArrowHead(g, endX, endY, Math.atan2(ey / elen, ex / elen));
+    }
+
+    private void strokeArrowHead(GraphicsContext g, double tipX, double tipY, double angle) {
         double head = 8;
-        double angle = Math.atan2(uy, ux);
-        g.strokeLine(endX, endY,
-                endX - head * Math.cos(angle - Math.PI / 7), endY - head * Math.sin(angle - Math.PI / 7));
-        g.strokeLine(endX, endY,
-                endX - head * Math.cos(angle + Math.PI / 7), endY - head * Math.sin(angle + Math.PI / 7));
+        g.strokeLine(tipX, tipY,
+                tipX - head * Math.cos(angle - Math.PI / 7), tipY - head * Math.sin(angle - Math.PI / 7));
+        g.strokeLine(tipX, tipY,
+                tipX - head * Math.cos(angle + Math.PI / 7), tipY - head * Math.sin(angle + Math.PI / 7));
     }
 }

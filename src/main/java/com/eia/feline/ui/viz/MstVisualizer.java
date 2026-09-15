@@ -52,6 +52,9 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
     private double[] nodeY = new double[0];
     private int step;
 
+    /** Carril de cada cable dentro de su par de intersecciones, para curvar los repetidos. */
+    private EdgeCurves.Lanes lanes = new EdgeCurves.Lanes(new int[0], new int[0]);
+
     /** true en cuanto el usuario arrastra un nodo: el proximo resize ya no debe pisarle el layout. */
     private boolean manualLayout;
 
@@ -130,6 +133,7 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         this.step = c.order().length;        // al pintar sin animar se muestra el arbol final
         this.manualLayout = false;
         interaction.resetView();
+        this.lanes = EdgeCurves.computeLanes(c.cables());
         scoreboard.setText(c.connected()
                 ? "Cable total: " + c.total()
                 : "Limon cut too many cables  (" + c.components() + " partes sueltas)");
@@ -176,35 +180,39 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         int examined = Math.min(step, order.length);
         double radius = currentRadius();
 
-        // 1. Todos los cables disponibles, apagados.
+        // 1. Todos los cables disponibles, apagados. Si dos o mas comparten el
+        //    mismo par de intersecciones se curvan en carriles distintos.
         g.setLineWidth(1.3);
         g.setStroke(Theme.fade(Theme.INK, 0.85));
         for (int e = 0; e < cables.size(); e++) {
             int a = cables.from(e), b = cables.to(e);
             if (a == b) continue;
-            g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+            strokeCable(g, a, b, lanes.slots()[e], lanes.groupSizes()[e], radius);
         }
 
-        // 2. Los cables ya examinados: dorados si entraron, tachados si cerraban ciclo.
+        // 2. Los cables ya examinados: dorados si entraron, tachados si cerraban
+        //    ciclo. Mismo carril que en el paso 1, para que la marca caiga
+        //    exactamente sobre el cable que le corresponde y no sobre otro paralelo.
         for (int i = 0; i < examined; i++) {
             int e = order[i];
             int a = cables.from(e), b = cables.to(e);
             if (a == b) continue;
+            int slot = lanes.slots()[e], groupSize = lanes.groupSizes()[e];
 
             if (accepted[i]) {
                 // Tinta primero, color encima: entintado y coloreado, como una vineta.
                 g.setStroke(Theme.INK);
                 g.setLineWidth(8);
-                g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+                strokeCable(g, a, b, slot, groupSize, radius);
                 g.setStroke(Theme.CHURUN);
                 g.setLineWidth(4.5);
-                g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+                strokeCable(g, a, b, slot, groupSize, radius);
             } else if (i == examined - 1) {
                 // Solo el rechazo mas reciente se marca, para no llenar el mapa de tachones.
                 g.setStroke(Theme.fade(Theme.LIMON, 0.85));
                 g.setLineWidth(2.2);
                 g.setLineDashes(5, 4);
-                g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+                strokeCable(g, a, b, slot, groupSize, radius);
                 g.setLineDashes((double[]) null);
             }
         }
@@ -225,6 +233,20 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
             }
         }
         g.setTextAlign(TextAlignment.LEFT);
+    }
+
+    /** Cable entre a y b: recto si es el unico de su par, curvado por carril si no. */
+    private void strokeCable(GraphicsContext g, int a, int b, int slot, int groupSize, double radius) {
+        if (groupSize <= 1) {
+            g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
+            return;
+        }
+        double[] ctrl = EdgeCurves.controlPoint(a, b, nodeX[a], nodeY[a], nodeX[b], nodeY[b],
+                slot, groupSize, radius);
+        g.beginPath();
+        g.moveTo(nodeX[a], nodeY[a]);
+        g.quadraticCurveTo(ctrl[0], ctrl[1], nodeX[b], nodeY[b]);
+        g.stroke();
     }
 
     /** La cola ordenada de cables, con el veredicto de cada uno. */
