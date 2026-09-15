@@ -18,10 +18,10 @@ import java.util.List;
 /**
  * Registro de las cuatro misiones.
  *
- * Es el unico sitio donde hay que tocar algo para conectar las Misiones 3 y 4
- * cuando lleguen: se cambia el solver de marcador de posicion por el real, se
- * pone implemented = true y se enchufa su visualizador. Ni MissionScreen ni
- * MissionSelectScreen cambian.
+ * Es el unico sitio donde hay que tocar algo para conectar la Mision 4 cuando
+ * llegue: se cambia el solver de marcador de posicion por el real y se pone
+ * implemented = true. Ni MissionScreen ni MissionSelectScreen cambian. La
+ * Mision 3 ya sigue este mismo patron con implemented = true.
  */
 public final class Missions {
 
@@ -68,7 +68,7 @@ public final class Missions {
                 new MissionThreeSolver(),
                 "Floyd-Warshall y Bellman-Ford",
                 MaxWalkVisualizer::new,
-                false);
+                true);
     }
 
     public static MissionDescriptor<MissionFourSolver.Case> four() {

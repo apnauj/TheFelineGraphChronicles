@@ -1,7 +1,10 @@
 package com.eia.feline.missions;
 
 import com.eia.feline.algo.graph.EdgeList;
-import com.eia.feline.missions.stub.ReferenceMaxWalk;
+import com.eia.feline.algo.maxwalk.AllPairsResult;
+import com.eia.feline.algo.maxwalk.BellmanFord;
+import com.eia.feline.algo.maxwalk.FloydWarshall;
+import com.eia.feline.algo.maxwalk.MaxWalkResult;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,11 +15,10 @@ import java.util.List;
 /**
  * Mision 3 -- el botin de churun (Floyd-Warshall y Bellman-Ford).
  *
- * ATENCION: los dos algoritmos vienen por ahora de
- * com.eia.feline.missions.stub.ReferenceMaxWalk, que es andamiaje temporal para
- * poder construir la interfaz. Cuando lleguen las implementaciones definitivas
- * en com.eia.feline.algo.maxwalk, lo unico que cambia en todo el proyecto son
- * las dos llamadas de solve(). El payload y la pantalla no se tocan.
+ * Los dos algoritmos viven en su lugar definitivo, com.eia.feline.algo.maxwalk:
+ * BellmanFord (un origen, detecta el ciclo positivo concreto) y FloydWarshall
+ * (todos los pares, alimenta la matriz que dibuja la GUI). El andamiaje temporal
+ * de com.eia.feline.missions.stub.ReferenceMaxWalk ya no lo usa esta clase.
  *
  * Formato de entrada:
  *   T
@@ -104,11 +106,11 @@ public final class MissionThreeSolver implements MissionSolver<MissionThreeSolve
             }
 
             // Los DOS algoritmos se ejecutan en TODOS los casos, como pide el enunciado.
-            ReferenceMaxWalk.AllPairs fw = ReferenceMaxWalk.floydWarshall(nodes, edges);
-            ReferenceMaxWalk.SingleSource bf = ReferenceMaxWalk.bellmanFord(nodes, edges, start);
+            AllPairsResult fw = FloydWarshall.run(nodes, edges);
+            MaxWalkResult bf = BellmanFord.run(nodes, edges, start);
 
-            boolean reachable = bf.dist()[destination] != ReferenceMaxWalk.NONE;
-            boolean infinite = bf.unbounded()[destination];
+            boolean reachable = bf.reached(destination);
+            boolean infinite = bf.isUnbounded(destination);
 
             Outcome outcome;
             String line;
@@ -143,10 +145,10 @@ public final class MissionThreeSolver implements MissionSolver<MissionThreeSolve
      * enunciado exige que la GUI avise si alguna vez discrepan, asi que la
      * comparacion se hace aqui y el desacuerdo viaja en el payload.
      */
-    private String crossCheck(ReferenceMaxWalk.AllPairs fw, ReferenceMaxWalk.SingleSource bf,
+    private String crossCheck(AllPairsResult fw, MaxWalkResult bf,
                               int s, int d, Outcome outcome, long churun) {
-        boolean fwReachable = fw.best()[s][d] != ReferenceMaxWalk.NONE;
-        boolean fwInfinite = fw.unbounded()[s][d];
+        boolean fwReachable = fw.reached(s, d);
+        boolean fwInfinite = fw.isUnbounded(s, d);
 
         switch (outcome) {
             case BLOCKED -> {
