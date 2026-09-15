@@ -14,20 +14,18 @@ in the README.
 |---|---|---|
 | 1 — Rescue Nina from the minefield | BFS + DFS on a grid | implemented |
 | 2 — Retrieve the Claude accounts | Dijkstra | implemented |
-| 3 — The ultimate food stash | Floyd-Warshall + Bellman-Ford | algorithm implemented; GUI flag pending |
+| 3 — The ultimate food stash | Floyd-Warshall + Bellman-Ford | implemented |
 | 4 — Reconnect the network | Kruskal + union-find | runs on temporary scaffolding |
 
-**Mission 3's algorithms are real; Mission 4 is not finished yet.** `MissionThreeSolver.solve` calls
-`algo/maxwalk/FloydWarshall` and `algo/maxwalk/BellmanFord` directly — real implementations, no stub
-involved for Mission 3's solver anymore. Mission 4 still works end to end and produces the statement's
-expected output, but its algorithm lives in `missions/stub/ReferenceMst` and is a placeholder written
-so the GUI could be built and demonstrated while another member writes the real one. `algo/mst/` is
-deliberately empty and reserved for it. When it lands: change the one call in `MissionFourSolver.solve`,
-and flip `implemented` to `true` for both `three()` and `four()` in `ui/screen/Missions.java` — Mission
-3's flag is still `false` because the in-app "andamiaje" banner and the README callout haven't been
-updated yet; that is a UI-only change, not an algorithm one. Only then delete `missions/stub/` entirely:
-`ui/viz/MatrixPane` still imports `ReferenceMaxWalk` for its `NONE` sentinel, so the package can't go
-until that is migrated too. No screen or visualizer changes.
+**Mission 3 is finished; Mission 4 is not.** `MissionThreeSolver.solve` calls `algo/maxwalk/FloydWarshall`
+and `algo/maxwalk/BellmanFord` directly, `ui/viz/MatrixPane` reads `FloydWarshall.NONE` for its sentinel,
+and `Missions.three()` has `implemented = true` — no stub involved anywhere for Mission 3 anymore, and
+`missions/stub/ReferenceMaxWalk` was deleted. Mission 4 still works end to end and produces the
+statement's expected output, but its algorithm lives in `missions/stub/ReferenceMst` and is a placeholder
+written so the GUI could be built and demonstrated while another member writes the real one. `algo/mst/`
+is deliberately empty and reserved for it. When it lands: change the one call in `MissionFourSolver.solve`,
+delete `missions/stub/` entirely (only `ReferenceMst` is left in it), and flip `implemented` to `true` in
+`ui/screen/Missions.java`'s `four()`. No screen or visualizer changes.
 
 ## Commands
 
@@ -62,7 +60,6 @@ algo/       pure algorithms. No JavaFX, Swing or AWT import — enforced by Algo
 missions/   text in → exact output lines + structured payload out. Still no UI imports.
   Tokenizer · InputFormatException · MissionSolver · CaseResult · MissionOneSolver … MissionFourSolver
   stub/     ReferenceMst: TEMPORARY scaffolding for mission 4 — see its README.
-            ReferenceMaxWalk only survives here for ui/viz/MatrixPane's NONE constant.
 
 ui/         the only package allowed to import JavaFX.
   theme/    Theme.java + theme.css — the palette, defined once in two formats

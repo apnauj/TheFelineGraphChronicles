@@ -1,6 +1,6 @@
 package com.eia.feline.ui.viz;
 
-import com.eia.feline.missions.stub.ReferenceMaxWalk;
+import com.eia.feline.algo.maxwalk.FloydWarshall;
 import com.eia.feline.ui.theme.Theme;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -85,7 +85,7 @@ public final class MatrixPane {
                 if (unbounded[i][j]) {
                     text = "inf";
                     g.setFill(Theme.LIMON);
-                } else if (best[i][j] == ReferenceMaxWalk.NONE) {
+                } else if (best[i][j] == FloydWarshall.NONE) {
                     text = "-";
                     g.setFill(Theme.fade(Theme.INK_SOFT, 0.7));
                 } else {

@@ -1,15 +1,14 @@
 # Como enchufar la Mision 4
 
-Guia para quien esta escribiendo Kruskal. Floyd-Warshall y Bellman-Ford (Mision
-3) ya estan integrados en `algo/maxwalk/`; lo que queda de esta guia es Kruskal
-+ union-find para `algo/mst/`.
+Guia para quien esta escribiendo Kruskal. La Mision 3 (Floyd-Warshall y
+Bellman-Ford) ya esta terminada de punta a punta -- algoritmo en
+`algo/maxwalk/`, GUI sin aviso de andamiaje -- y su stub ya se borro; lo que
+queda de esta guia es Kruskal + union-find para `algo/mst/`.
 
 **Resumen en una linea:** las pantallas, los dibujos y las animaciones de las
 cuatro misiones ya estan hechos y funcionando. Lo unico que falta es el
 algoritmo definitivo de la Mision 4. Para enchufarlo hay que tocar **un
-archivo**, y cuando tambien se migre `ui/viz/MatrixPane` (fuera del alcance de
-esta guia) se puede borrar una carpeta. Ni la interfaz ni los visualizadores
-cambian.
+archivo** y borrar una carpeta. Ni la interfaz ni los visualizadores cambian.
 
 ---
 
@@ -17,18 +16,21 @@ cambian.
 
 Para poder construir la interfaz habia que tener con que dibujar, asi que las
 Misiones 3 y 4 corrieron sobre **andamiaje provisional** en
-`src/main/java/com/eia/feline/missions/stub/`:
+`src/main/java/com/eia/feline/missions/stub/`. Hoy solo queda ahi lo de la
+Mision 4:
 
-| Archivo | Que tenia | Estado |
+| Archivo | Que tiene | Estado |
 |---|---|---|
-| `ReferenceMaxWalk.java` | Floyd-Warshall y Bellman-Ford de maximizacion | **ya integrado**: `MissionThreeSolver` usa `algo/maxwalk/FloydWarshall` y `algo/maxwalk/BellmanFord`. El archivo sigue aqui solo porque `ui/viz/MatrixPane` todavia lee su constante `NONE`; se borra cuando eso se migre. |
 | `ReferenceMst.java` | Kruskal + union-find | **pendiente**: lo reemplaza `algo/mst/` |
+
+`ReferenceMaxWalk.java` (Floyd-Warshall y Bellman-Ford de maximizacion) ya se
+borro: `MissionThreeSolver` y `ui/viz/MatrixPane` usan directamente
+`algo/maxwalk/FloydWarshall` y `algo/maxwalk/BellmanFord`, y `Missions.three()`
+ya tiene `implemented = true`.
 
 El codigo de `ReferenceMst` da la salida correcta del enunciado, **pero no es la
 entrega**. La aplicacion lo sigue diciendo en pantalla para la Mision 4 (un
-aviso azul y la etiqueta `ANDAMIAJE` en la tarjeta); la Mision 3 ya tiene su
-algoritmo real, aunque ese aviso todavia no se ha quitado de la pantalla
-(queda para la pasada de interfaz, que es aparte).
+aviso azul y la etiqueta `ANDAMIAJE` en la tarjeta).
 
 El paquete `algo/mst/` esta **vacio a proposito**, reservado para el codigo
 definitivo de Kruskal. `algo/maxwalk/` ya no esta vacio: ahi viven
@@ -123,13 +125,12 @@ MaxWalkResult bf = BellmanFord.run(nodes, edges, start);
 3. `mvn test`. Las pruebas de la Mision 4 ya existen y ya comparan contra los
    ejemplos del enunciado: si pasan, quedo.
 
-4. Una vez que tambien `ui/viz/MatrixPane` deje de usar `ReferenceMaxWalk.NONE`
-   (pasada de interfaz, fuera del alcance de esta guia), se puede borrar
-   `src/main/java/com/eia/feline/missions/stub/` entero.
+4. Borrar `src/main/java/com/eia/feline/missions/stub/` entero (solo queda
+   `ReferenceMst.java` y su README ahi).
 
-5. En `ui/screen/Missions.java`, poner `implemented = true` en `three()` y
-   `four()` (es el ultimo parametro). Eso quita el aviso y cambia la etiqueta de
-   `ANDAMIAJE` a `LISTA`. Es un paso de interfaz, no de algoritmo.
+5. En `ui/screen/Missions.java`, poner `implemented = true` en `four()` (es el
+   ultimo parametro). Eso quita el aviso y cambia la etiqueta de `ANDAMIAJE` a
+   `LISTA`. Es un paso de interfaz, no de algoritmo.
 
 **No hay paso mas alla de estos.** No hay que tocar ninguna pantalla ni ningun
 visualizador.

@@ -56,8 +56,7 @@ src/main/java/com/eia/feline/
 ├── missions/        texto de entrada -> lineas exactas + payload de dibujo
 │   ├── Tokenizer · InputFormatException · MissionSolver · CaseResult
 │   ├── MissionOneSolver … MissionFourSolver
-│   └── stub/        ReferenceMst: andamiaje TEMPORAL de la Mision 4 (se borra).
-│                     ReferenceMaxWalk solo sigue aqui por ui/viz/MatrixPane.
+│   └── stub/        ReferenceMst: andamiaje TEMPORAL de la Mision 4 (se borra)
 └── ui/              lo unico que importa JavaFX
     ├── theme/ screen/ viz/ fx/
 ```
@@ -80,21 +79,20 @@ Los dos contratos que sostienen todo:
 |---|---|---|
 | 1 — Rescatar a Nina | BFS y DFS | terminada |
 | 2 — Las cuentas de Claude | Dijkstra | terminada |
-| 3 — El botin de churun | Floyd-Warshall y Bellman-Ford | **algoritmo real, GUI pendiente** |
+| 3 — El botin de churun | Floyd-Warshall y Bellman-Ford | terminada |
 | 4 — Reconectar la red | Kruskal con union-find | **andamiaje temporal** |
 
 **Para enchufar la Mision 4 definitiva: ver [`INTEGRACION.md`](INTEGRACION.md).**
 
 La Mision 3 ya tiene sus algoritmos definitivos en `algo/maxwalk/`
-(`FloydWarshall`, `BellmanFord`); `MissionThreeSolver` los usa directamente. La
+(`FloydWarshall`, `BellmanFord`); `MissionThreeSolver` y `ui/viz/MatrixPane` los
+usan directamente, y el aviso de andamiaje ya se quito de su pantalla. La
 Mision 4 sigue funcionando de punta a punta y produce la salida correcta del
 enunciado, pero su algoritmo vive en `missions/stub/ReferenceMst.java` y es
 provisional: se escribio para poder construir y demostrar la interfaz mientras
 se escribe la version definitiva. La aplicacion todavia lo dice en pantalla
-para la Mision 4 -- y tambien, por ahora, para la Mision 3, porque el flag de
-la interfaz que quita ese aviso todavia no se ha actualizado (es un cambio de
-UI, pendiente aparte). El paquete `algo/mst/` esta vacio a proposito,
-reservado para Kruskal.
+para la Mision 4. El paquete `algo/mst/` esta vacio a proposito, reservado
+para Kruskal.
 
 ## Recursos de terceros
 
@@ -170,8 +168,7 @@ ventana.
 
 ## Limitaciones conocidas
 
-- La Mision 4 corre sobre andamiaje temporal (ver arriba). La Mision 3 ya tiene
-  su algoritmo real, pero el aviso de la GUI todavia no se ha actualizado.
+- La Mision 4 corre sobre andamiaje temporal (ver arriba).
 - El arte de los personajes son figuras primitivas dibujadas en codigo
   (`ui/fx/CatArt`), a la espera del material definitivo. Reemplazarlo no exige
   cambios fuera de esa clase y de `ui/screen/Missions.java`; los prompts para
