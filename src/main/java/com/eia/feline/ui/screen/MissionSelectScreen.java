@@ -9,6 +9,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -167,20 +168,19 @@ public final class MissionSelectScreen extends BorderPane {
         DropShadow misprint = Ink.misprint(Theme.fade(Theme.INK, 0.55), 6, 6);
         card.setEffect(misprint);
 
-        // Rebote perpetuo del retrato, desfasado por mision para que no latan al unisono.
-        Timeline idle = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(portrait.translateYProperty(), 0)),
-                new KeyFrame(Duration.millis(1100),
-                        new KeyValue(portrait.translateYProperty(), -7, Interpolator.EASE_BOTH)),
-                new KeyFrame(Duration.millis(2200),
-                        new KeyValue(portrait.translateYProperty(), 0, Interpolator.EASE_BOTH)));
-        idle.setDelay(Duration.millis(mission.number() * 180));
-        idle.setCycleCount(Animation.INDEFINITE);
-        idle.play();
+        // La vineta se rasteriza una vez y se reutiliza.
+        //
+        // Antes el retrato hacia un rebote perpetuo. Mover un hijo dentro de una
+        // vineta que lleva sombra obliga a recalcular la sombra de TODA la vineta
+        // en cada fotograma, y son cuatro vinetas a la vez, todo el rato, sin que
+        // nadie las este mirando. Se quita el rebote y se cachea: el menu deja de
+        // costar nada mientras se decide que mision abrir.
+        card.setCache(true);
+        card.setCacheHint(CacheHint.SPEED);
 
         double restAngle = card.getRotate();
-        card.setOnMouseEntered(e -> hover(card, misprint, restAngle, true));
-        card.setOnMouseExited(e -> hover(card, misprint, restAngle, false));
+        card.setOnMouseEntered(e -> hover(card, restAngle, true));
+        card.setOnMouseExited(e -> hover(card, restAngle, false));
         card.setOnMouseClicked(e -> navigator.go(new MissionScreen<>(mission, navigator)));
 
         return card;
@@ -190,14 +190,20 @@ public final class MissionSelectScreen extends BorderPane {
      * Al pasar por encima la vineta se endereza y se levanta. No hay transiciones
      * en el CSS de JavaFX, asi que el movimiento se hace aqui con un Timeline.
      */
-    private void hover(Region card, DropShadow misprint, double restAngle, boolean entering) {
+    /**
+     * Al pasar por encima la vineta se endereza y se levanta.
+     *
+     * Solo se animan escala, giro y desplazamiento: son transformaciones, y sobre
+     * un nodo cacheado la tarjeta grafica las aplica al mapa de bits ya
+     * rasterizado. Antes tambien se animaba el desplazamiento de la SOMBRA, y eso
+     * obliga a recalcular el efecto -- y a tirar la cache -- en cada fotograma.
+     */
+    private void hover(Region card, double restAngle, boolean entering) {
         Timeline t = new Timeline(new KeyFrame(Duration.millis(150),
-                new KeyValue(card.scaleXProperty(), entering ? 1.04 : 1.0, Interpolator.EASE_OUT),
-                new KeyValue(card.scaleYProperty(), entering ? 1.04 : 1.0, Interpolator.EASE_OUT),
+                new KeyValue(card.scaleXProperty(), entering ? 1.045 : 1.0, Interpolator.EASE_OUT),
+                new KeyValue(card.scaleYProperty(), entering ? 1.045 : 1.0, Interpolator.EASE_OUT),
                 new KeyValue(card.rotateProperty(), entering ? 0 : restAngle, Interpolator.EASE_OUT),
-                new KeyValue(card.translateYProperty(), entering ? -7 : 0, Interpolator.EASE_OUT),
-                new KeyValue(misprint.offsetXProperty(), entering ? 11 : 6, Interpolator.EASE_OUT),
-                new KeyValue(misprint.offsetYProperty(), entering ? 11 : 6, Interpolator.EASE_OUT)));
+                new KeyValue(card.translateYProperty(), entering ? -8 : 0, Interpolator.EASE_OUT)));
         t.play();
     }
 

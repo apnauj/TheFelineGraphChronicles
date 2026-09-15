@@ -64,7 +64,7 @@ public final class Missions {
                 "El botin de churun",
                 "Maximizar el churun, incluso con pasadizos envenenados",
                 Theme.CHURUN,
-                () -> portrait("churun", Theme.CHURUN),
+                () -> portrait("nero", Theme.CHURUN),
                 new MissionThreeSolver(),
                 "Floyd-Warshall y Bellman-Ford",
                 MaxWalkVisualizer::new,
@@ -80,7 +80,7 @@ public final class Missions {
                 // azul y crema. Theme.LIMON sigue siendo el color de "peligro"
                 // (bombas, pesos negativos); son dos cosas distintas.
                 Theme.CAPE,
-                () -> Art.portrait("limon", 150, () -> CatArt.villain(Theme.LIMON, 104)),
+                () -> portrait("limon", Theme.LIMON),
                 new MissionFourSolver(),
                 "Kruskal con union-find",
                 MstVisualizer::new,
@@ -92,6 +92,9 @@ public final class Missions {
      * de posicion. Asi el arte definitivo entra pieza a pieza.
      */
     private static Node portrait(String name, javafx.scene.paint.Color fur) {
-        return Art.portrait(name, 150, () -> CatArt.head(fur, 104));
+        // El villano cae a una silueta distinta si su PNG no esta.
+        boolean villain = name.equals("limon") || name.equals("nero");
+        return Art.portrait(name, 150,
+                () -> villain ? CatArt.villain(fur, 104) : CatArt.head(fur, 104));
     }
 }
