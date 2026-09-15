@@ -9,7 +9,6 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.shape.StrokeType;
-import javafx.scene.transform.Rotate;
 
 /**
  * Gatos dibujados con figuras primitivas, entintados al estilo del comic.
@@ -81,74 +80,6 @@ public final class CatArt {
                 leftEye, rightEye, leftPupil, rightPupil, leftSpark, rightSpark, nose, whiskers);
         return g;
     }
-
-    /**
-     * Gato de perfil en cuatro patas. Devuelve el grupo y deja las patas y la cola
-     * accesibles para animarlas, porque el ciclo de carrera las mueve.
-     */
-    public static Runner runner(Color fur, double size) {
-        double u = size / 100.0;             // unidad: el cuerpo mide 100 unidades de largo
-        double ink = Math.max(2, 3.2 * u);
-        Group g = new Group();
-
-        Ellipse body = new Ellipse(0, 0, 42 * u, 23 * u);
-        body.setFill(fur);
-        outline(body, ink);
-
-        // Cola, en su propio grupo para poder ondearla.
-        Group tail = new Group();
-        Line tailLine = new Line(-40 * u, -6 * u, -76 * u, -32 * u);
-        tailLine.setStroke(fur);
-        tailLine.setStrokeWidth(9 * u);
-        tailLine.setStrokeLineCap(StrokeLineCap.ROUND);
-        Line tailInk = new Line(-40 * u, -6 * u, -76 * u, -32 * u);
-        tailInk.setStroke(Theme.INK);
-        tailInk.setStrokeWidth(9 * u + ink * 1.6);
-        tailInk.setStrokeLineCap(StrokeLineCap.ROUND);
-        tail.getChildren().addAll(tailInk, tailLine);
-
-        Group headGroup = head(fur, 48 * u);
-        headGroup.setTranslateX(45 * u);
-        headGroup.setTranslateY(-17 * u);
-
-        Line[] legs = new Line[4];
-        Line[] legInk = new Line[4];
-        Rotate[] hips = new Rotate[4];
-        double[] hipX = { -26 * u, -14 * u, 16 * u, 28 * u };
-        for (int i = 0; i < 4; i++) {
-            legInk[i] = new Line(hipX[i], 14 * u, hipX[i], 42 * u);
-            legInk[i].setStroke(Theme.INK);
-            legInk[i].setStrokeWidth(7 * u + ink * 1.4);
-            legInk[i].setStrokeLineCap(StrokeLineCap.ROUND);
-
-            legs[i] = new Line(hipX[i], 14 * u, hipX[i], 42 * u);
-            legs[i].setStroke(fur);
-            legs[i].setStrokeWidth(7 * u);
-            legs[i].setStrokeLineCap(StrokeLineCap.ROUND);
-
-            // La pata tiene que girar sobre la CADERA, no sobre su punto medio.
-            // setRotate() de JavaFX gira alrededor del centro del nodo, que en una
-            // linea es la mitad: la pata se abriria en aspa en vez de dar un paso.
-            // Un Rotate con pivote en el extremo de arriba es lo que hace que se
-            // lea como una zancada; ademas el color y su contorno de tinta son dos
-            // lineas distintas y comparten el MISMO transform, o se separarian.
-            hips[i] = new Rotate(0, hipX[i], 14 * u);
-            legs[i].getTransforms().add(hips[i]);
-            legInk[i].getTransforms().add(hips[i]);
-        }
-
-        // Orden de pintado: primero la tinta de las patas, luego el color, luego el cuerpo.
-        g.getChildren().add(tail);
-        g.getChildren().addAll(legInk);
-        g.getChildren().addAll(legs);
-        g.getChildren().addAll(body, headGroup);
-
-        return new Runner(g, legs, legInk, hips, tail, u);
-    }
-
-    /** Un gato corredor con sus partes animables expuestas. */
-    public record Runner(Group node, Line[] legs, Line[] legInk, Rotate[] hips,
-                         Group tail, double unit) {}
 
     /** Silueta de villano: cabeza con la mirada entrecerrada. */
     public static Group villain(Color fur, double size) {

@@ -37,7 +37,8 @@ public final class Missions {
                 "Rescatando a Nina",
                 "Cruzar el campo minado sin pisar una bomba",
                 Theme.POLA,
-                () -> portrait("nina", Theme.NINA),
+                // Todavia no hay arte de Nina: manda la heroina de la mision.
+                () -> portrait("pola", Theme.POLA),
                 new MissionOneSolver(),
                 "BFS y DFS",
                 GridVisualizer::new,
@@ -63,7 +64,8 @@ public final class Missions {
                 "El botin de churun",
                 "Maximizar el churun, incluso con pasadizos envenenados",
                 Theme.CHURUN,
-                () -> portrait("churun", Theme.CHURUN),
+                // Todavia no hay arte de churun: manda Nero, que envenena los pasadizos.
+                () -> portrait("nero", Theme.CHURUN),
                 new MissionThreeSolver(),
                 "Floyd-Warshall y Bellman-Ford",
                 MaxWalkVisualizer::new,

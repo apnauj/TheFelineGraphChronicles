@@ -1,5 +1,6 @@
 package com.eia.feline.ui.screen;
 
+import com.eia.feline.ui.fx.Art;
 import com.eia.feline.ui.fx.CatArt;
 import com.eia.feline.ui.fx.Ink;
 import com.eia.feline.ui.theme.Fonts;
@@ -8,11 +9,12 @@ import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
-import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.CacheHint;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -20,25 +22,30 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 /**
- * Portada del numero uno: Pola corriendo mientras se descifran las pistas de Nero.
+ * Portada del numero uno: Pola en pose de heroina mientras se descifran las
+ * pistas de Nero.
  *
- * Esta pantalla es la que fija el lenguaje visual antes de que el usuario vea
- * nada mas, asi que lleva de golpe todos los recursos del comic: papel tramado,
- * lineas de velocidad, rotulo con contorno, estrella de impacto y sombra de
- * registro mal alineado.
+ * NOTAS DE RENDIMIENTO -- la version anterior iba a tirones y merece explicacion,
+ * porque el motivo no era obvio:
  *
- * La duracion minima es deliberada. Sin ella, en una maquina rapida la portada
- * parpadearia durante 80 ms y pareceria un fallo de dibujo en vez de una
- * intencion.
+ *  - Las lineas de velocidad GIRABAN. Eran 34 poligonos dentro de un Group de 900
+ *    px de radio, y rotarlo obliga a JavaFX a volver a rasterizar toda esa area en
+ *    cada fotograma. Era, con diferencia, el mayor coste de la pantalla. Ahora
+ *    estan quietas, que ademas es como se dibujan en un comic de verdad: las
+ *    lineas de velocidad no se mueven, sugieren el movimiento.
+ *  - Habia doce Timeline a la vez (cuatro patas, rebote, cola, cinco motas de
+ *    polvo, maquina de escribir, barra). Ahora son tres.
+ *  - Lo que si se anima lleva setCache(true): JavaFX lo rasteriza una vez y luego
+ *    mueve el mapa de bits, en vez de volver a dibujar las figuras cada fotograma.
+ *
+ * El gato tambien cambio: ya hay arte real, asi que no hace falta articular patas
+ * con pivotes. La heroina entra de golpe, con sobrepaso, y flota suavemente.
  */
 public final class LoadingScreen extends StackPane {
 
@@ -46,9 +53,7 @@ public final class LoadingScreen extends StackPane {
     private static final String MESSAGE = "DESCIFRANDO LAS PISTAS DE NERO...";
 
     /** Altura de la linea del suelo, como fraccion de la ventana. */
-    private static final double FLOOR = 0.74;
-    /** Cuanto bajan las patas por debajo del centro del gato, para apoyarlo en el suelo. */
-    private static final double FEET_OFFSET = 74;
+    private static final double FLOOR = 0.86;
 
     private final Runnable onFinished;
     private final boolean autoAdvance;
@@ -57,8 +62,9 @@ public final class LoadingScreen extends StackPane {
     private final Button start = new Button("COMENZAR");
     private final Pane backdrop = new Pane();
 
+    private Node hero;
     private Timeline typewriter;
-    private Animation gait;
+    private Timeline float_;
 
     /** La portada del arranque: la barra se llena y pasa sola a la seleccion. */
     public static LoadingScreen intro(Runnable onFinished) {
@@ -81,35 +87,21 @@ public final class LoadingScreen extends StackPane {
 
         // Papel tramado como fondo de la pantalla, no como nodo: un rectangulo
         // atado al tamano de su propio contenedor infla la medicion del padre.
-        Ink.paperBackground(this, Theme.PAPER, Theme.LIMON, 0.28);
+        Ink.paperBackground(this, Theme.PAPER, Theme.LIMON, 0.26);
+
         backdrop.setMouseTransparent(true);
         buildBackdrop();
 
-        // Rotulo con contorno de tinta. Bangers ya viene en mayusculas de diseno.
-        Text title = Ink.letter("THE FELINE GRAPH CHRONICLES", 56, Theme.CHURUN);
+        Text title = Ink.letter("THE FELINE GRAPH CHRONICLES", 54, Theme.CHURUN);
         title.setEffect(Ink.misprint(Theme.fade(Theme.LIMON, 0.55), 5, 5));
 
-        Text subtitle = Ink.letter("POLA Y MINERVA CONTRA LIMON", 22, Theme.PAPER);
+        Text subtitle = Ink.letter("POLA Y MINERVA CONTRA LIMON", 21, Theme.PAPER);
 
         typed.getStyleClass().addAll("mono", "caption");
         typed.setTextFill(Theme.INK);
 
         progress.setPrefWidth(440);
         progress.setMinHeight(22);
-
-        Group runner = buildRunningCat();
-        Pane catLayer = new Pane(runner);
-        catLayer.setMouseTransparent(true);
-        runner.layoutXProperty().bind(catLayer.widthProperty().divide(2));
-        runner.layoutYProperty().bind(catLayer.heightProperty().multiply(FLOOR).subtract(FEET_OFFSET));
-
-        VBox heading = new VBox(10, title, subtitle);
-        heading.setAlignment(Pos.CENTER);
-        heading.setPadding(new Insets(74, 40, 0, 40));
-        // Sin esto el VBox se estira a toda la altura del StackPane y centra su
-        // contenido verticalmente, ignorando la alineacion de arriba.
-        heading.setMaxHeight(Region.USE_PREF_SIZE);
-        StackPane.setAlignment(heading, Pos.TOP_CENTER);
 
         start.getStyleClass().add("button-primary");
         start.setOnAction(e -> {
@@ -121,31 +113,34 @@ public final class LoadingScreen extends StackPane {
         progress.setVisible(autoAdvance);
         progress.setManaged(autoAdvance);
 
+        VBox heading = new VBox(8, title, subtitle);
+        heading.setAlignment(Pos.CENTER);
+        heading.setPadding(new Insets(46, 40, 0, 40));
+        // Sin esto el VBox se estira a toda la altura del StackPane y centra su
+        // contenido verticalmente, ignorando la alineacion de arriba.
+        heading.setMaxHeight(Region.USE_PREF_SIZE);
+        StackPane.setAlignment(heading, Pos.TOP_CENTER);
+
         VBox footer = new VBox(12, progress, start, typed);
         footer.setAlignment(Pos.CENTER);
-        footer.setPadding(new Insets(0, 40, 70, 40));
+        footer.setPadding(new Insets(0, 40, 34, 40));
         footer.setMaxWidth(Region.USE_PREF_SIZE);
         footer.setMaxHeight(Region.USE_PREF_SIZE);
         StackPane.setAlignment(footer, Pos.BOTTOM_CENTER);
 
-        getChildren().addAll(backdrop, catLayer, heading, footer, buildCaption(), buildKapow());
+        getChildren().addAll(backdrop, buildHero(), heading, footer, buildCaption(), buildKapow());
     }
 
-    /** Papel tramado, lineas de velocidad y una linea de suelo entintada. */
+    /** Lineas de velocidad quietas y una banda de suelo, todo estatico. */
     private void buildBackdrop() {
-        // Lineas de velocidad saliendo de detras del gato.
-        Group lines = Ink.speedLines(900, 34, Theme.fade(Theme.CHURUN, 0.55), 11);
+        // QUIETAS a proposito: ver la nota de rendimiento de la clase.
+        Group lines = Ink.speedLines(880, 30, Theme.fade(Theme.CHURUN, 0.50), 11);
         lines.layoutXProperty().bind(backdrop.widthProperty().divide(2));
-        lines.layoutYProperty().bind(backdrop.heightProperty().multiply(0.52));
-        backdrop.getChildren().add(lines);
+        lines.layoutYProperty().bind(backdrop.heightProperty().multiply(0.50));
+        // Se rasteriza una vez; no cambia nunca.
+        lines.setCache(true);
+        lines.setCacheHint(CacheHint.SPEED);
 
-        RotateTransition spin = new RotateTransition(Duration.seconds(52), lines);
-        spin.setByAngle(360);
-        spin.setInterpolator(Interpolator.LINEAR);
-        spin.setCycleCount(Animation.INDEFINITE);
-        spin.play();
-
-        // Suelo: una banda de color con su linea de tinta encima.
         Rectangle ground = new Rectangle();
         ground.setFill(Theme.PAPER_DEEP);
         ground.widthProperty().bind(backdrop.widthProperty());
@@ -158,12 +153,31 @@ public final class LoadingScreen extends StackPane {
         groundInk.setHeight(4);
         groundInk.layoutYProperty().bind(backdrop.heightProperty().multiply(FLOOR));
 
-        backdrop.getChildren().addAll(ground, groundInk);
+        backdrop.getChildren().addAll(lines, ground, groundInk);
     }
 
     /**
-     * La caja amarilla de narracion, arriba a la izquierda, como en una vineta.
-     * Ademas de contar algo, llena el hueco entre el rotulo y el suelo.
+     * Pola, en grande y apoyada en el suelo. Flota muy despacio: un solo Timeline
+     * sobre translateY, y el nodo cacheado para que solo se mueva el mapa de bits.
+     */
+    private Node buildHero() {
+        hero = Art.portrait("pola", 430, () -> CatArt.head(Theme.POLA, 220));
+
+        StackPane holder = new StackPane(hero);
+        holder.setMouseTransparent(true);
+        StackPane.setAlignment(hero, Pos.BOTTOM_CENTER);
+        // El retrato se apoya justo encima de la linea del suelo.
+        holder.paddingProperty().bind(javafx.beans.binding.Bindings.createObjectBinding(
+                () -> new Insets(0, 0, getHeight() * (1 - FLOOR) + 6, 0), heightProperty()));
+
+        hero.setCache(true);
+        hero.setCacheHint(CacheHint.SPEED);
+        return holder;
+    }
+
+    /**
+     * La caja amarilla de narracion, como en una vineta. Ademas de contar algo,
+     * llena el hueco entre el rotulo y el suelo.
      */
     private Label buildCaption() {
         Label caption = new Label(
@@ -174,92 +188,45 @@ public final class LoadingScreen extends StackPane {
         caption.setMaxWidth(Region.USE_PREF_SIZE);
         caption.setMaxHeight(Region.USE_PREF_SIZE);
         StackPane.setAlignment(caption, Pos.CENTER_LEFT);
-        StackPane.setMargin(caption, new Insets(0, 0, 150, 78));
+        StackPane.setMargin(caption, new Insets(0, 0, 210, 60));
         return caption;
     }
 
     /** La estrella de impacto de la esquina, con el numero del comic. */
     private Group buildKapow() {
-        Polygon star = Ink.inkedStar(13, 74, 46, Theme.LIMON, 7);
-        Text number = Ink.letter("N. 1", 22, Theme.CHURUN);
+        Polygon star = Ink.inkedStar(13, 72, 44, Theme.LIMON, 7);
+        Text number = Ink.letter("N. 1", 21, Theme.CHURUN);
         number.setTranslateX(-number.getLayoutBounds().getWidth() / 2);
         number.setTranslateY(8);
 
         Group kapow = new Group(star, number);
         kapow.setRotate(-14);
         StackPane.setAlignment(kapow, Pos.TOP_RIGHT);
-        StackPane.setMargin(kapow, new Insets(96, 108, 0, 0));
+        StackPane.setMargin(kapow, new Insets(74, 92, 0, 0));
         kapow.setMouseTransparent(true);
+        kapow.setCache(true);
+        kapow.setCacheHint(CacheHint.SPEED);
 
-        Ink.throb(kapow, 1.09, Duration.millis(1500)).play();
+        Ink.throb(kapow, 1.08, Duration.millis(1600)).play();
         return kapow;
-    }
-
-    /** Pola corriendo en el sitio: las patas rotan en contrafase y la cola ondea. */
-    private Group buildRunningCat() {
-        CatArt.Runner runner = CatArt.runner(Theme.POLA, 160);
-        Group holder = new Group(runner.node());
-
-        // Se anima el pivote de la cadera, que mueve a la vez el color y la tinta.
-        Timeline stride = new Timeline();
-        for (int i = 0; i < runner.hips().length; i++) {
-            // Las patas 0 y 2 van en fase; las 1 y 3, en contrafase.
-            double phase = (i % 2 == 0) ? 1 : -1;
-            var hip = runner.hips()[i];
-            stride.getKeyFrames().addAll(
-                    new KeyFrame(Duration.ZERO, new KeyValue(hip.angleProperty(), 30 * phase)),
-                    new KeyFrame(Duration.millis(140),
-                            new KeyValue(hip.angleProperty(), -30 * phase, Interpolator.EASE_BOTH)),
-                    new KeyFrame(Duration.millis(280),
-                            new KeyValue(hip.angleProperty(), 30 * phase, Interpolator.EASE_BOTH)));
-        }
-        stride.setCycleCount(Animation.INDEFINITE);
-        stride.play();
-        gait = stride;
-
-        Timeline bounce = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(holder.translateYProperty(), 0)),
-                new KeyFrame(Duration.millis(140),
-                        new KeyValue(holder.translateYProperty(), -8, Interpolator.EASE_BOTH)),
-                new KeyFrame(Duration.millis(280),
-                        new KeyValue(holder.translateYProperty(), 0, Interpolator.EASE_BOTH)));
-        bounce.setCycleCount(Animation.INDEFINITE);
-        bounce.play();
-
-        RotateTransition tailWave = new RotateTransition(Duration.millis(620), runner.tail());
-        tailWave.setFromAngle(-10);
-        tailWave.setToAngle(12);
-        tailWave.setAutoReverse(true);
-        tailWave.setCycleCount(Animation.INDEFINITE);
-        tailWave.play();
-
-        // Polvo entintado bajo las patas.
-        Group dust = new Group();
-        for (int i = 0; i < 5; i++) {
-            Circle puff = new Circle(4, Theme.PAPER);
-            puff.setStroke(Theme.INK);
-            puff.setStrokeWidth(2);
-            puff.setCenterY(50);
-            dust.getChildren().add(puff);
-            Timeline drift = new Timeline(
-                    new KeyFrame(Duration.ZERO,
-                            new KeyValue(puff.centerXProperty(), -14),
-                            new KeyValue(puff.opacityProperty(), 1),
-                            new KeyValue(puff.radiusProperty(), 4)),
-                    new KeyFrame(Duration.millis(900),
-                            new KeyValue(puff.centerXProperty(), -108, Interpolator.LINEAR),
-                            new KeyValue(puff.opacityProperty(), 0),
-                            new KeyValue(puff.radiusProperty(), 11)));
-            drift.setDelay(Duration.millis(i * 180));
-            drift.setCycleCount(Animation.INDEFINITE);
-            drift.play();
-        }
-
-        return new Group(dust, holder);
     }
 
     /** Arranca la portada. En modo intro avanza sola; en modo portada espera. */
     public void play() {
+        // Entrada de comic: la heroina llega pasada de tamano y rebota a su sitio.
+        Ink.pop(hero, Duration.millis(560)).play();
+
+        Timeline drift = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(hero.translateYProperty(), 0)),
+                new KeyFrame(Duration.millis(1700),
+                        new KeyValue(hero.translateYProperty(), -14, Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.millis(3400),
+                        new KeyValue(hero.translateYProperty(), 0, Interpolator.EASE_BOTH)));
+        drift.setCycleCount(Animation.INDEFINITE);
+        drift.setDelay(Duration.millis(560));
+        drift.play();
+        float_ = drift;
+
         typewriter = new Timeline();
         for (int i = 0; i <= MESSAGE.length(); i++) {
             final int upTo = i;
@@ -285,6 +252,6 @@ public final class LoadingScreen extends StackPane {
 
     private void stopAnimations() {
         if (typewriter != null) typewriter.stop();
-        if (gait != null) gait.stop();
+        if (float_ != null) float_.stop();
     }
 }
