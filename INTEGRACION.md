@@ -1,32 +1,39 @@
-# Como enchufar las Misiones 3 y 4
+# Como enchufar la Mision 4
 
-Guia para quien esta escribiendo Floyd-Warshall, Bellman-Ford y Kruskal.
+Guia para quien esta escribiendo Kruskal. Floyd-Warshall y Bellman-Ford (Mision
+3) ya estan integrados en `algo/maxwalk/`; lo que queda de esta guia es Kruskal
++ union-find para `algo/mst/`.
 
 **Resumen en una linea:** las pantallas, los dibujos y las animaciones de las
-cuatro misiones ya estan hechos y funcionando. Lo que falta son los algoritmos
-definitivos. Para enchufarlos hay que tocar **dos archivos** y borrar una
-carpeta. Ni la interfaz ni los visualizadores cambian.
+cuatro misiones ya estan hechos y funcionando. Lo unico que falta es el
+algoritmo definitivo de la Mision 4. Para enchufarlo hay que tocar **un
+archivo**, y cuando tambien se migre `ui/viz/MatrixPane` (fuera del alcance de
+esta guia) se puede borrar una carpeta. Ni la interfaz ni los visualizadores
+cambian.
 
 ---
 
 ## 1. Por que hay codigo que ya funciona si falta la mitad
 
 Para poder construir la interfaz habia que tener con que dibujar, asi que las
-Misiones 3 y 4 corren hoy sobre **andamiaje provisional** en
+Misiones 3 y 4 corrieron sobre **andamiaje provisional** en
 `src/main/java/com/eia/feline/missions/stub/`:
 
-| Archivo | Que tiene | Destino |
+| Archivo | Que tenia | Estado |
 |---|---|---|
-| `ReferenceMaxWalk.java` | Floyd-Warshall y Bellman-Ford de maximizacion | lo reemplaza `algo/maxwalk/` |
-| `ReferenceMst.java` | Kruskal + union-find | lo reemplaza `algo/mst/` |
+| `ReferenceMaxWalk.java` | Floyd-Warshall y Bellman-Ford de maximizacion | **ya integrado**: `MissionThreeSolver` usa `algo/maxwalk/FloydWarshall` y `algo/maxwalk/BellmanFord`. El archivo sigue aqui solo porque `ui/viz/MatrixPane` todavia lee su constante `NONE`; se borra cuando eso se migre. |
+| `ReferenceMst.java` | Kruskal + union-find | **pendiente**: lo reemplaza `algo/mst/` |
 
-Ese codigo da la salida correcta del enunciado, **pero no es la entrega**. La
-aplicacion lo dice en pantalla (un aviso azul en cada mision y la etiqueta
-`ANDAMIAJE` en la tarjeta) justamente para que nadie lo confunda con trabajo
-terminado.
+El codigo de `ReferenceMst` da la salida correcta del enunciado, **pero no es la
+entrega**. La aplicacion lo sigue diciendo en pantalla para la Mision 4 (un
+aviso azul y la etiqueta `ANDAMIAJE` en la tarjeta); la Mision 3 ya tiene su
+algoritmo real, aunque ese aviso todavia no se ha quitado de la pantalla
+(queda para la pasada de interfaz, que es aparte).
 
-Los paquetes `algo/maxwalk/` y `algo/mst/` estan **vacios a proposito**,
-reservados para el codigo definitivo. No hay nada ahi que pueda chocar.
+El paquete `algo/mst/` esta **vacio a proposito**, reservado para el codigo
+definitivo de Kruskal. `algo/maxwalk/` ya no esta vacio: ahi viven
+`FloydWarshall.java`, `BellmanFord.java` y sus records de resultado
+(`AllPairsResult`, `MaxWalkResult`).
 
 ---
 
@@ -88,38 +95,54 @@ las aristas se queden en su posicion original.
 
 ## 3. El cambio, paso a paso
 
-1. Escribir las clases definitivas en `algo/maxwalk/` y `algo/mst/`.
+**Mision 3 -- ya hecho, como referencia del patron a seguir:**
 
-2. En `MissionThreeSolver.solve()`, cambiar estas dos lineas:
+```java
+// antes, en MissionThreeSolver.solve()
+ReferenceMaxWalk.AllPairs fw = ReferenceMaxWalk.floydWarshall(nodes, edges);
+ReferenceMaxWalk.SingleSource bf = ReferenceMaxWalk.bellmanFord(nodes, edges, start);
 
-   ```java
-   ReferenceMaxWalk.AllPairs fw = ReferenceMaxWalk.floydWarshall(nodes, edges);
-   ReferenceMaxWalk.SingleSource bf = ReferenceMaxWalk.bellmanFord(nodes, edges, start);
-   ```
+// ahora
+AllPairsResult fw = FloydWarshall.run(nodes, edges);
+MaxWalkResult bf = BellmanFord.run(nodes, edges, start);
+```
 
-   En `MissionFourSolver.solve()`, cambiar esta:
+**Mision 4 -- lo que falta:**
+
+1. Escribir la clase definitiva en `algo/mst/` (Kruskal + union-find con
+   compresion de caminos y union por tamano/rango).
+
+2. En `MissionFourSolver.solve()`, cambiar esta linea:
 
    ```java
    ReferenceMst.Result mst = ReferenceMst.kruskal(nodes, cables);
    ```
 
-3. Borrar `src/main/java/com/eia/feline/missions/stub/` entero.
+   por la llamada a la clase real de `algo/mst/`.
 
-4. En `ui/screen/Missions.java`, poner `implemented = true` en `three()` y
+3. `mvn test`. Las pruebas de la Mision 4 ya existen y ya comparan contra los
+   ejemplos del enunciado: si pasan, quedo.
+
+4. Una vez que tambien `ui/viz/MatrixPane` deje de usar `ReferenceMaxWalk.NONE`
+   (pasada de interfaz, fuera del alcance de esta guia), se puede borrar
+   `src/main/java/com/eia/feline/missions/stub/` entero.
+
+5. En `ui/screen/Missions.java`, poner `implemented = true` en `three()` y
    `four()` (es el ultimo parametro). Eso quita el aviso y cambia la etiqueta de
-   `ANDAMIAJE` a `LISTA`.
+   `ANDAMIAJE` a `LISTA`. Es un paso de interfaz, no de algoritmo.
 
-5. `mvn test`. Las pruebas de las Misiones 3 y 4 ya existen y ya comparan contra
-   los ejemplos del enunciado: si pasan, quedo.
-
-**No hay paso 6.** No hay que tocar ninguna pantalla ni ningun visualizador.
+**No hay paso mas alla de estos.** No hay que tocar ninguna pantalla ni ningun
+visualizador.
 
 ---
 
-## 4. Cuatro trampas del enunciado que el andamiaje ya resuelve
+## 4. Trampas del enunciado (tres ya resueltas, una todavia pendiente)
 
-Vale la pena leerlas antes de escribir el codigo definitivo, porque son las que
-cuestan puntos.
+Vale la pena leerlas: son las que cuestan puntos, y las que probablemente
+pregunten en la defensa oral.
+
+**Mision 3 -- ya resueltas; ver el codigo real en
+`algo/maxwalk/FloydWarshall.java` y `BellmanFord.java`:**
 
 **a) El orden de precedencia de la Mision 3 es estricto.** Primero se pregunta si
 D es alcanzable (`Limon blocked the way`), despues si hay churun infinito
@@ -144,8 +167,11 @@ acotado si y solo si existe un `k` con `d[i][k]` finito, `d[k][k] > 0` y `d[k][j
 finito. Sin esa pasada la matriz guarda numeros grandes sin sentido en vez de
 infinitos.
 
+**Mision 4 -- todavia pendiente:**
+
 **d) La Mision 4 numera las intersecciones de 1 a N**, no de 0 a N-1 como las
-Misiones 2 y 3. La conversion se hace en un solo sitio, al leer la entrada.
+Misiones 2 y 3. La conversion ya se hace en un solo sitio al leer la entrada
+(`MissionFourSolver`, no `algo/mst/`): a Kruskal le llegan indices en 0..N-1.
 
 ---
 
@@ -181,5 +207,5 @@ Y para probar una mision sin abrir la ventana:
 
 ```bash
 mvn -q compile
-java -cp target/classes com.eia.feline.missions.MissionThreeSolver < entrada.txt
+java -cp target/classes com.eia.feline.missions.MissionFourSolver < entrada.txt
 ```

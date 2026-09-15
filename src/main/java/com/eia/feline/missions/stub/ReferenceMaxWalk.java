@@ -8,13 +8,18 @@ import java.util.Deque;
 import java.util.List;
 
 /**
- * ANDAMIAJE TEMPORAL -- ver el README de este paquete.
+ * YA SUPERADA -- ver el README de este paquete.
  *
- * Floyd-Warshall y Bellman-Ford de MAXIMIZACION para la Mision 3, escritos solo
- * para poder construir y demostrar la interfaz. La version definitiva la escribe
- * otro integrante en com.eia.feline.algo.maxwalk y esta clase se borra.
+ * Floyd-Warshall y Bellman-Ford de MAXIMIZACION para la Mision 3. Las versiones
+ * definitivas ya existen en com.eia.feline.algo.maxwalk (FloydWarshall,
+ * BellmanFord) y MissionThreeSolver las usa a ellas, no a esta clase.
  *
- * Notas del problema que la implementacion definitiva tambien tiene que respetar:
+ * Esta clase sigue viva SOLO porque ui/viz/MatrixPane todavia lee
+ * ReferenceMaxWalk.NONE al pintar la matriz de la Mision 3. En cuanto ese
+ * visualizador pase a usar el centinela de algo.maxwalk (FloydWarshall.NONE /
+ * BellmanFord.NONE, ambos Long.MIN_VALUE), este archivo entero se borra.
+ *
+ * Notas del problema que las implementaciones definitivas tambien respetan:
  *
  *  - Las aristas son DIRIGIDAS y una ruta es un PASEO: puede repetir nodos y
  *    aristas. Por eso el problema es tratable; el camino simple mas largo seria

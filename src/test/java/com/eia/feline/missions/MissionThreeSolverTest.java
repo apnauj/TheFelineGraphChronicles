@@ -1,7 +1,10 @@
 package com.eia.feline.missions;
 
 import com.eia.feline.algo.graph.EdgeList;
-import com.eia.feline.missions.stub.ReferenceMaxWalk;
+import com.eia.feline.algo.maxwalk.AllPairsResult;
+import com.eia.feline.algo.maxwalk.BellmanFord;
+import com.eia.feline.algo.maxwalk.FloydWarshall;
+import com.eia.feline.algo.maxwalk.MaxWalkResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -92,8 +95,8 @@ class MissionThreeSolverTest {
         edges.add(0, 1, 5);
         edges.add(1, 2, 5);
 
-        ReferenceMaxWalk.AllPairs honest = ReferenceMaxWalk.floydWarshall(3, edges);
-        ReferenceMaxWalk.SingleSource bf = ReferenceMaxWalk.bellmanFord(3, edges, 0);
+        AllPairsResult honest = FloydWarshall.run(3, edges);
+        MaxWalkResult bf = BellmanFord.run(3, edges, 0);
         assertEquals(10L, honest.best()[0][2]);
         assertEquals(10L, bf.dist()[2]);
 
