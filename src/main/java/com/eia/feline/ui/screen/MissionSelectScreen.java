@@ -9,6 +9,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -31,6 +32,10 @@ import javafx.util.Duration;
  * sistema contempla las cuatro y cual falta.
  */
 public final class MissionSelectScreen extends BorderPane {
+
+    /** Caja donde se encaja el retrato, en pixeles. Fija a proposito: ver card(). */
+    private static final double PORTRAIT_W = 212;
+    private static final double PORTRAIT_H = 340;
 
     public MissionSelectScreen(Navigator navigator) {
         setPadding(new Insets(30, 40, 26, 40));
@@ -113,12 +118,29 @@ public final class MissionSelectScreen extends BorderPane {
         StackPane portraitHolder = new StackPane(portrait);
         portraitHolder.setMinHeight(140);
 
-        // El arte real crece con la vineta; los marcadores dibujados por codigo se
-        // quedan a su tamano, que para un marcador ya esta bien.
+        // El retrato se encaja en una caja FIJA, por ancho y por alto.
+        //
+        // Dos razones, y las dos se pagaron caras:
+        //
+        // 1. Atando solo fitHeight, con preserveRatio el ancho sale de la
+        //    proporcion de la imagen y se sale de la vineta: los gatos son de 0,74
+        //    y a 400 px de alto piden 297 de ancho, mas de los 232 que hay. Con
+        //    churun, que es apaisado (4,6), el desbordamiento es enorme.
+        // 2. Atar fitWidth al ancho del contenedor arregla eso y crea un ciclo de
+        //    medicion: ImageView no es redimensionable, asi que sus limites entran
+        //    en el ancho preferido del padre, que agranda al padre, que agranda a
+        //    la imagen. La pantalla acabo midiendo 1579 px de ancho en una ventana
+        //    de 1280.
+        //
+        // Con valores fijos no hay realimentacion posible. La imagen no crece con
+        // la ventana, que es un precio pequeno por un layout que no se descuadra.
         if (portrait instanceof ImageView art) {
             art.setPreserveRatio(true);
-            art.fitHeightProperty().bind(portraitHolder.heightProperty().subtract(18));
+            art.setFitWidth(PORTRAIT_W);
+            art.setFitHeight(PORTRAIT_H);
         }
+        // Red de seguridad: nada puede pintarse fuera de la vineta.
+        Ink.clipToBounds(portraitHolder);
         // El retrato se queda con el espacio sobrante y el texto baja al pie de la
         // vineta, como el cartucho de narracion de un comic.
         VBox.setVgrow(portraitHolder, Priority.ALWAYS);
@@ -146,20 +168,19 @@ public final class MissionSelectScreen extends BorderPane {
         DropShadow misprint = Ink.misprint(Theme.fade(Theme.INK, 0.55), 6, 6);
         card.setEffect(misprint);
 
-        // Rebote perpetuo del retrato, desfasado por mision para que no latan al unisono.
-        Timeline idle = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(portrait.translateYProperty(), 0)),
-                new KeyFrame(Duration.millis(1100),
-                        new KeyValue(portrait.translateYProperty(), -7, Interpolator.EASE_BOTH)),
-                new KeyFrame(Duration.millis(2200),
-                        new KeyValue(portrait.translateYProperty(), 0, Interpolator.EASE_BOTH)));
-        idle.setDelay(Duration.millis(mission.number() * 180));
-        idle.setCycleCount(Animation.INDEFINITE);
-        idle.play();
+        // La vineta se rasteriza una vez y se reutiliza.
+        //
+        // Antes el retrato hacia un rebote perpetuo. Mover un hijo dentro de una
+        // vineta que lleva sombra obliga a recalcular la sombra de TODA la vineta
+        // en cada fotograma, y son cuatro vinetas a la vez, todo el rato, sin que
+        // nadie las este mirando. Se quita el rebote y se cachea: el menu deja de
+        // costar nada mientras se decide que mision abrir.
+        card.setCache(true);
+        card.setCacheHint(CacheHint.SPEED);
 
         double restAngle = card.getRotate();
-        card.setOnMouseEntered(e -> hover(card, misprint, restAngle, true));
-        card.setOnMouseExited(e -> hover(card, misprint, restAngle, false));
+        card.setOnMouseEntered(e -> hover(card, restAngle, true));
+        card.setOnMouseExited(e -> hover(card, restAngle, false));
         card.setOnMouseClicked(e -> navigator.go(new MissionScreen<>(mission, navigator)));
 
         return card;
@@ -169,14 +190,20 @@ public final class MissionSelectScreen extends BorderPane {
      * Al pasar por encima la vineta se endereza y se levanta. No hay transiciones
      * en el CSS de JavaFX, asi que el movimiento se hace aqui con un Timeline.
      */
-    private void hover(Region card, DropShadow misprint, double restAngle, boolean entering) {
+    /**
+     * Al pasar por encima la vineta se endereza y se levanta.
+     *
+     * Solo se animan escala, giro y desplazamiento: son transformaciones, y sobre
+     * un nodo cacheado la tarjeta grafica las aplica al mapa de bits ya
+     * rasterizado. Antes tambien se animaba el desplazamiento de la SOMBRA, y eso
+     * obliga a recalcular el efecto -- y a tirar la cache -- en cada fotograma.
+     */
+    private void hover(Region card, double restAngle, boolean entering) {
         Timeline t = new Timeline(new KeyFrame(Duration.millis(150),
-                new KeyValue(card.scaleXProperty(), entering ? 1.04 : 1.0, Interpolator.EASE_OUT),
-                new KeyValue(card.scaleYProperty(), entering ? 1.04 : 1.0, Interpolator.EASE_OUT),
+                new KeyValue(card.scaleXProperty(), entering ? 1.045 : 1.0, Interpolator.EASE_OUT),
+                new KeyValue(card.scaleYProperty(), entering ? 1.045 : 1.0, Interpolator.EASE_OUT),
                 new KeyValue(card.rotateProperty(), entering ? 0 : restAngle, Interpolator.EASE_OUT),
-                new KeyValue(card.translateYProperty(), entering ? -7 : 0, Interpolator.EASE_OUT),
-                new KeyValue(misprint.offsetXProperty(), entering ? 11 : 6, Interpolator.EASE_OUT),
-                new KeyValue(misprint.offsetYProperty(), entering ? 11 : 6, Interpolator.EASE_OUT)));
+                new KeyValue(card.translateYProperty(), entering ? -8 : 0, Interpolator.EASE_OUT)));
         t.play();
     }
 

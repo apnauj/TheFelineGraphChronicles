@@ -3,6 +3,7 @@ package com.eia.feline.ui.screen;
 import com.eia.feline.ui.fx.Art;
 import com.eia.feline.ui.fx.CatArt;
 import com.eia.feline.ui.fx.Ink;
+import com.eia.feline.ui.fx.Music;
 import com.eia.feline.ui.theme.Fonts;
 import com.eia.feline.ui.theme.Theme;
 import javafx.animation.Animation;
@@ -18,6 +19,8 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -50,7 +53,6 @@ import javafx.util.Duration;
 public final class LoadingScreen extends StackPane {
 
     private static final Duration MINIMUM = Duration.millis(3000);
-    private static final String MESSAGE = "DESCIFRANDO LAS PISTAS DE NERO...";
 
     /** Altura de la linea del suelo, como fraccion de la ventana. */
     private static final double FLOOR = 0.86;
@@ -58,12 +60,10 @@ public final class LoadingScreen extends StackPane {
     private final Runnable onFinished;
     private final boolean autoAdvance;
     private final ProgressBar progress = new ProgressBar(0);
-    private final Label typed = new Label("");
     private final Button start = new Button("COMENZAR");
     private final Pane backdrop = new Pane();
 
     private Node hero;
-    private Timeline typewriter;
     private Timeline float_;
 
     /** La portada del arranque: la barra se llena y pasa sola a la seleccion. */
@@ -92,13 +92,7 @@ public final class LoadingScreen extends StackPane {
         backdrop.setMouseTransparent(true);
         buildBackdrop();
 
-        Text title = Ink.letter("THE FELINE GRAPH CHRONICLES", 54, Theme.CHURUN);
-        title.setEffect(Ink.misprint(Theme.fade(Theme.LIMON, 0.55), 5, 5));
-
-        Text subtitle = Ink.letter("POLA Y MINERVA CONTRA LIMON", 21, Theme.PAPER);
-
-        typed.getStyleClass().addAll("mono", "caption");
-        typed.setTextFill(Theme.INK);
+        Node masthead = buildMasthead();
 
         progress.setPrefWidth(440);
         progress.setMinHeight(22);
@@ -113,22 +107,29 @@ public final class LoadingScreen extends StackPane {
         progress.setVisible(autoAdvance);
         progress.setManaged(autoAdvance);
 
-        VBox heading = new VBox(8, title, subtitle);
+        VBox heading = new VBox(0, masthead);
         heading.setAlignment(Pos.CENTER);
-        heading.setPadding(new Insets(46, 40, 0, 40));
+        heading.setPadding(new Insets(24, 40, 0, 40));
         // Sin esto el VBox se estira a toda la altura del StackPane y centra su
         // contenido verticalmente, ignorando la alineacion de arriba.
         heading.setMaxHeight(Region.USE_PREF_SIZE);
         StackPane.setAlignment(heading, Pos.TOP_CENTER);
 
-        VBox footer = new VBox(12, progress, start, typed);
+        VBox footer = new VBox(12, progress, start);
         footer.setAlignment(Pos.CENTER);
         footer.setPadding(new Insets(0, 40, 34, 40));
         footer.setMaxWidth(Region.USE_PREF_SIZE);
         footer.setMaxHeight(Region.USE_PREF_SIZE);
         StackPane.setAlignment(footer, Pos.BOTTOM_CENTER);
 
-        getChildren().addAll(backdrop, buildHero(), heading, footer, buildCaption(), buildKapow());
+        getChildren().addAll(backdrop, buildHero(), heading, footer,
+                buildCaption(), buildStolen(), buildPolaLine(), buildVillainLine(),
+                buildKapow(), Music.toggleButton());
+        Node musicToggle = getChildren().get(getChildren().size() - 1);
+        StackPane.setAlignment(musicToggle, Pos.TOP_LEFT);
+        StackPane.setMargin(musicToggle, new Insets(18, 0, 0, 22));
+
+        Music.start();
     }
 
     /** Lineas de velocidad quietas y una banda de suelo, todo estatico. */
@@ -187,9 +188,131 @@ public final class LoadingScreen extends StackPane {
         caption.setRotate(-2.2);
         caption.setMaxWidth(Region.USE_PREF_SIZE);
         caption.setMaxHeight(Region.USE_PREF_SIZE);
-        StackPane.setAlignment(caption, Pos.CENTER_LEFT);
-        StackPane.setMargin(caption, new Insets(0, 0, 210, 60));
+        StackPane.setAlignment(caption, Pos.TOP_LEFT);
+        StackPane.setMargin(caption, new Insets(330, 0, 0, 52));
         return caption;
+    }
+
+    /**
+     * La cabecera, montada como el logotipo de una portada de comic: tres lineas
+     * de distinto tamano, muy juntas, sobre una banda de tinta.
+     *
+     * Una sola linea de 54 px se perdia en el ancho de la ventana y dejaba la
+     * portada vacia. En un comic el titulo NO es una linea de texto: es una pieza
+     * grafica que ocupa el tercio de arriba y manda sobre todo lo demas.
+     */
+    private Node buildMasthead() {
+        Text the = Ink.letter("THE", 34, Theme.PAPER);
+        Text feline = Ink.letter("FELINE GRAPH", 92, Theme.CHURUN);
+        Text chronicles = Ink.letter("CHRONICLES", 62, Theme.POLA);
+
+        feline.setEffect(Ink.misprint(Theme.fade(Theme.LIMON, 0.65), 7, 7));
+        chronicles.setEffect(Ink.misprint(Theme.fade(Theme.CAPE, 0.60), 5, 5));
+
+        // Espaciado negativo: las lineas de un logotipo de comic se solapan un
+        // poco. Con el interlineado normal se leerian como tres frases sueltas.
+        VBox stack = new VBox(-14, the, feline, chronicles);
+        stack.setAlignment(Pos.CENTER);
+
+        // Banda de tinta detras, que es lo que amarra el logotipo a la pagina.
+        //
+        // Es el FONDO de la caja, no un Rectangle dentro de ella. Un Rectangle
+        // atado al tamano de un hermano dentro del mismo StackPane crea un ciclo
+        // de medicion: la banda depende del alto del texto, el StackPane se mide
+        // por la mayor de las dos, el texto se estira a ese alto, y la banda
+        // vuelve a crecer. El sintoma fue una banda que se comia media pantalla.
+        // Es el mismo fallo que documenta Ink.paperBackground, y volvio a caer
+        // aqui. Un fondo no participa en la medicion: la caja se ajusta al texto.
+        StackPane banded = new StackPane(stack);
+        banded.setBackground(new Background(new BackgroundFill(Theme.INK, null, null)));
+        banded.setPadding(new Insets(14, 40, 18, 40));
+        banded.setMaxWidth(Region.USE_PREF_SIZE);
+        banded.setMaxHeight(Region.USE_PREF_SIZE);
+        banded.setRotate(-1.6);
+
+        Label tagline = new Label("POLA Y MINERVA CONTRA LIMON  \u00B7  4 MISIONES  \u00B7  6 ALGORITMOS");
+        tagline.getStyleClass().add("caption-box");
+        tagline.setRotate(1.1);
+
+        VBox head = new VBox(12, banded, tagline);
+        head.setAlignment(Pos.CENTER);
+        head.setMaxHeight(Region.USE_PREF_SIZE);
+        return head;
+    }
+
+    /** Segundo cartucho de narracion, debajo del primero. */
+    private Label buildStolen() {
+        Label caption = new Label(
+                "...LAS CUENTAS DE CLAUDE, Y A NINA\n"
+                        + "DE LA CASA DE SEBAS.");
+        caption.getStyleClass().add("caption-box");
+        caption.setRotate(1.6);
+        caption.setMaxWidth(Region.USE_PREF_SIZE);
+        caption.setMaxHeight(Region.USE_PREF_SIZE);
+        StackPane.setAlignment(caption, Pos.TOP_LEFT);
+        StackPane.setMargin(caption, new Insets(432, 0, 0, 76));
+        return caption;
+    }
+
+    /** Bocadillo de Pola, con el rabito apuntando hacia ella. */
+    private Node buildPolaLine() {
+        Node bubble = speech("\u00A1VAMOS, MINERVA!\nCADA PISTA ES UN GRAFO...\nY LOS GRAFOS SE RESUELVEN.",
+                Theme.PAPER, Ink.Tail.BOTTOM_LEFT, -3);
+        StackPane.setAlignment(bubble, Pos.TOP_RIGHT);
+        StackPane.setMargin(bubble, new Insets(268, 66, 0, 0));
+        return bubble;
+    }
+
+    /** Bocadillo del villano, arriba, en su color. */
+    private Node buildVillainLine() {
+        Node bubble = speech("\u00A1EL CHURUN SERA MIO!\n- LIMON", Theme.LIMON, Ink.Tail.TOP_RIGHT, 4);
+        StackPane.setAlignment(bubble, Pos.TOP_LEFT);
+        StackPane.setMargin(bubble, new Insets(176, 0, 0, 62));
+        return bubble;
+    }
+
+    /**
+     * Un bocadillo con su texto dentro. La figura y la etiqueta van en un
+     * StackPane porque el bocadillo es una Shape y no sabe colocar texto; se
+     * dibuja detras y el texto encima.
+     */
+    private Node speech(String text, javafx.scene.paint.Color fill, Ink.Tail tail, double angle) {
+        Label label = new Label(text);
+        label.setTextFill(fill == Theme.LIMON ? Theme.PAPER : Theme.INK);
+        label.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        // La fuente se fija AQUI y no desde el CSS.
+        //
+        // applyCss() sobre un nodo que todavia no esta en una escena no aplica las
+        // reglas de la hoja de estilos, porque la hoja cuelga de la escena. La
+        // medida salia con la fuente por defecto, mas estrecha que Bangers, y el
+        // bocadillo quedaba pequeno: el texto se salia por abajo.
+        label.setFont(javafx.scene.text.Font.font(Fonts.DISPLAY, 17));
+        label.applyCss();
+
+        double w = Math.max(220, label.prefWidth(-1) + 46);
+        double h = Math.max(70, label.prefHeight(w) + 34);
+
+        javafx.scene.shape.Shape shape = Ink.inkedBubble(w, h, tail, fill);
+        shape.setEffect(Ink.misprint(Theme.fade(Theme.INK, 0.35), 4, 4));
+
+        // El rabito sobresale unos 20 px del cuerpo del bocadillo, asi que los
+        // limites de la figura son mas altos que el bocadillo en si. El StackPane
+        // centra el texto dentro de ESOS limites y lo deja descolgado hacia el
+        // rabito, cruzando el borde. Se compensa medio rabito en sentido contrario.
+        double tailShift = switch (tail) {
+            case BOTTOM_LEFT, BOTTOM_RIGHT -> -10;
+            case TOP_LEFT, TOP_RIGHT -> 10;
+            default -> 0;
+        };
+        label.setTranslateY(tailShift);
+
+        StackPane holder = new StackPane(shape, label);
+        holder.setMaxWidth(Region.USE_PREF_SIZE);
+        holder.setMaxHeight(Region.USE_PREF_SIZE);
+        holder.setRotate(angle);
+        holder.setMouseTransparent(true);
+        return holder;
     }
 
     /** La estrella de impacto de la esquina, con el numero del comic. */
@@ -227,14 +350,6 @@ public final class LoadingScreen extends StackPane {
         drift.play();
         float_ = drift;
 
-        typewriter = new Timeline();
-        for (int i = 0; i <= MESSAGE.length(); i++) {
-            final int upTo = i;
-            typewriter.getKeyFrames().add(new KeyFrame(
-                    Duration.millis(38.0 * i), e -> typed.setText(MESSAGE.substring(0, upTo))));
-        }
-        typewriter.play();
-
         if (!autoAdvance) {
             Ink.pop(start, Duration.millis(420)).play();
             return;
@@ -251,7 +366,6 @@ public final class LoadingScreen extends StackPane {
     }
 
     private void stopAnimations() {
-        if (typewriter != null) typewriter.stop();
         if (float_ != null) float_.stop();
     }
 }

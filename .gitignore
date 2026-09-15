@@ -33,3 +33,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### macOS ###
+.DS_Store

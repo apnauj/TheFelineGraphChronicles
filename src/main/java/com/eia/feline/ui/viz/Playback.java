@@ -28,7 +28,17 @@ import java.util.function.IntConsumer;
  */
 public final class Playback {
 
-    private static final double BASE_STEP_MILLIS = 90;
+    /**
+     * Milisegundos por paso a velocidad 1.
+     *
+     * A 90 ms la animacion pasaba demasiado rapido para seguirla: la gracia de
+     * esta pantalla es ver COMO avanza la frontera, no que termine pronto.
+     */
+    private static final double BASE_STEP_MILLIS = 260;
+
+    /** Extremos del mando de velocidad. */
+    private static final double MIN_SPEED = 0.1;
+    private static final double MAX_SPEED = 2.0;
 
     private final VBox root = new VBox(8);
     private final Button playPause = new Button("Reproducir");
@@ -36,7 +46,7 @@ public final class Playback {
     private final Button stepForward = new Button(">");
     private final Button reset = new Button("Reiniciar");
     private final Slider scrubber = new Slider(0, 0, 0);
-    private final Slider speed = new Slider(0.25, 8, 1);
+    private final Slider speed = new Slider(MIN_SPEED, MAX_SPEED, 1);
     private final Label counter = new Label("0 / 0");
     private final Label speedLabel = new Label("1.0x");
 
@@ -59,9 +69,13 @@ public final class Playback {
         scrubber.setBlockIncrement(1);
         HBox.setHgrow(scrubber, Priority.ALWAYS);
 
-        speed.setPrefWidth(140);
+        speed.setPrefWidth(150);
+        speed.setBlockIncrement(0.1);
+        speed.setMajorTickUnit(0.5);
+        speed.setMinorTickCount(4);
+        speed.setSnapToTicks(false);
         speed.valueProperty().addListener((o, was, now) -> {
-            speedLabel.setText(String.format("%.2fx", now.doubleValue()));
+            speedLabel.setText(String.format("%.1fx", now.doubleValue()));
             if (timeline != null && timeline.getStatus() == Animation.Status.RUNNING) {
                 // Reconstruir es mas simple y mas fiable que cambiarle la tasa a una
                 // Timeline en marcha, y el salto no se nota a estas velocidades.

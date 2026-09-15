@@ -28,6 +28,19 @@ public final class Art {
     /** Las imagenes se cargan una sola vez: varias pantallas piden el mismo retrato. */
     private static final Map<String, Image> CACHE = new HashMap<>();
 
+    /**
+     * Alto al que se decodifican los retratos.
+     *
+     * Los PNG vienen a 900 px de alto y se muestran a 340 como mucho.
+     * Decodificarlos a tamano completo y dejar que la tarjeta grafica los escale
+     * en cada fotograma gasta unas siete veces mas memoria y mas trabajo por
+     * cuadro del necesario. Se decodifican una vez, ya al tamano util.
+     *
+     * Se deja algo de margen (450 y no 340) para que en pantallas de alta
+     * densidad, donde un punto logico son dos fisicos, no se vean pastosos.
+     */
+    private static final int DECODE_HEIGHT = 450;
+
     private Art() {}
 
     /**
@@ -72,7 +85,8 @@ public final class Art {
         Image image = null;
         try (var in = Art.class.getResourceAsStream(BASE + name + ".png")) {
             if (in != null) {
-                Image candidate = new Image(in);
+                // requestedWidth 0 con preserveRatio: el ancho sale del alto.
+                Image candidate = new Image(in, 0, DECODE_HEIGHT, true, true);
                 if (!candidate.isError()) image = candidate;
             }
         } catch (Exception ignored) {
