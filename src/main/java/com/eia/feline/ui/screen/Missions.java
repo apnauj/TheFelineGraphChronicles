@@ -18,10 +18,10 @@ import java.util.List;
 /**
  * Registro de las cuatro misiones.
  *
- * Es el unico sitio donde hay que tocar algo para conectar la Mision 4 cuando
- * llegue: se cambia el solver de marcador de posicion por el real y se pone
- * implemented = true. Ni MissionScreen ni MissionSelectScreen cambian. La
- * Mision 3 ya sigue este mismo patron con implemented = true.
+ * Las cuatro tienen ya su algoritmo definitivo y implemented = true. Ni
+ * MissionScreen ni MissionSelectScreen sabian nada de cual mision estaba
+ * pendiente: solo leen este registro, asi que no necesitaron cambiar cuando
+ * las Misiones 3 y 4 dejaron de ser andamiaje.
  */
 public final class Missions {
 
@@ -85,7 +85,7 @@ public final class Missions {
                 new MissionFourSolver(),
                 "Kruskal con union-find",
                 MstVisualizer::new,
-                false);
+                true);
     }
 
     /**

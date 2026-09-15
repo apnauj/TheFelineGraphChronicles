@@ -1,6 +1,6 @@
 package com.eia.feline.missions;
 
-import com.eia.feline.missions.stub.ReferenceMst;
+import com.eia.feline.algo.mst.Kruskal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -91,7 +91,7 @@ class MissionFourSolverTest {
     @Test
     @DisplayName("El union-find con compresion de caminos aplana el arbol al buscar")
     void pathCompressionFlattensTheTree() {
-        ReferenceMst.UnionFind uf = new ReferenceMst.UnionFind(6);
+        Kruskal.UnionFind uf = new Kruskal.UnionFind(6);
         assertTrue(uf.union(0, 1));
         assertTrue(uf.union(1, 2));
         assertTrue(uf.union(2, 3));
