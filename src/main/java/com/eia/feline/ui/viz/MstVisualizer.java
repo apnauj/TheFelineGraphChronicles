@@ -4,8 +4,10 @@ import com.eia.feline.algo.graph.EdgeList;
 import com.eia.feline.missions.MissionFourSolver;
 import com.eia.feline.ui.theme.Theme;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
@@ -40,34 +42,70 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
     private final VBox root = new VBox(8);
     private final Label scoreboard = new Label();
     private final Label queueLabel = new Label("CABLES, DE MAS BARATO A MAS CARO");
+    private final Label mapLegend = new Label(
+            "Rueda = zoom, arrastra el fondo = mover, arrastra un nodo = reacomodar");
+    private final Button resetViewButton = new Button("Restablecer vista");
+    private final GraphCanvasInteraction interaction;
 
     private MissionFourSolver.Case current;
     private double[] nodeX = new double[0];
     private double[] nodeY = new double[0];
     private int step;
 
+    /** true en cuanto el usuario arrastra un nodo: el proximo resize ya no debe pisarle el layout. */
+    private boolean manualLayout;
+
     public MstVisualizer() {
         scoreboard.getStyleClass().add("scoreboard");
         queueLabel.getStyleClass().add("section-label");
+        mapLegend.getStyleClass().add("caption");
 
         queueScroll.getStyleClass().add("panel-sunken");
         queueScroll.setPannable(true);
         queueScroll.setMinWidth(250);
         queueScroll.setPrefWidth(250);
 
+        resetViewButton.getStyleClass().addAll("button-ghost", "icon-button");
+        resetViewButton.setOnAction(e -> resetView());
+
         canvasHolder.setMinSize(0, 0);
-        HBox.setHgrow(canvasHolder, Priority.ALWAYS);
         canvasHolder.widthProperty().addListener((o, a, b) -> relayout());
         canvasHolder.heightProperty().addListener((o, a, b) -> relayout());
+
+        interaction = new GraphCanvasInteraction(canvas, canvasHolder,
+                () -> nodeX, () -> nodeY,
+                () -> current == null ? 0 : current.nodes(),
+                this::currentRadius,
+                this::repaint,
+                () -> manualLayout = true);
+
+        HBox mapHeader = new HBox(12, mapLegend, resetViewButton);
+        mapHeader.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(mapLegend, Priority.ALWAYS);
+        VBox mapColumn = new VBox(6, mapHeader, canvasHolder);
+        VBox.setVgrow(canvasHolder, Priority.ALWAYS);
+        HBox.setHgrow(mapColumn, Priority.ALWAYS);
 
         VBox queueColumn = new VBox(6, queueLabel, queueScroll);
         VBox.setVgrow(queueScroll, Priority.ALWAYS);
 
-        HBox split = new HBox(12, canvasHolder, queueColumn);
+        HBox split = new HBox(12, mapColumn, queueColumn);
         VBox.setVgrow(split, Priority.ALWAYS);
 
         root.setPadding(new Insets(12));
         root.getChildren().addAll(scoreboard, split);
+    }
+
+    /** Vuelve al layout automatico y al zoom/pan originales. */
+    private void resetView() {
+        manualLayout = false;
+        interaction.resetView();
+        relayout();
+    }
+
+    /** Radio del nodo; un solo sitio porque lo necesitan el dibujo, el layout y el hit-test del arrastre. */
+    private double currentRadius() {
+        return Math.max(10, Math.min(22, 340.0 / Math.max(5, current == null ? 8 : current.nodes())));
     }
 
     @Override
@@ -90,6 +128,8 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
     public void render(MissionFourSolver.Case c) {
         this.current = c;
         this.step = c.order().length;        // al pintar sin animar se muestra el arbol final
+        this.manualLayout = false;
+        interaction.resetView();
         scoreboard.setText(c.connected()
                 ? "Cable total: " + c.total()
                 : "Limon cut too many cables  (" + c.components() + " partes sueltas)");
@@ -112,8 +152,8 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
     private void relayout() {
         canvas.setWidth(Math.max(1, canvasHolder.getWidth()));
         canvas.setHeight(Math.max(1, canvasHolder.getHeight()));
-        if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1) {
-            double radius = Math.max(10, Math.min(22, 340.0 / Math.max(5, current.nodes())));
+        if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1 && !manualLayout) {
+            double radius = currentRadius();
             double[][] positions = SpringLayout.compute(current.nodes(), current.cables(),
                     canvas.getWidth(), canvas.getHeight(), radius + 16, radius * 2 + 22, 1234L);
             nodeX = positions[0];
@@ -134,7 +174,7 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         int[] order = current.order();
         boolean[] accepted = current.accepted();
         int examined = Math.min(step, order.length);
-        double radius = Math.max(10, Math.min(22, 340.0 / Math.max(5, current.nodes())));
+        double radius = currentRadius();
 
         // 1. Todos los cables disponibles, apagados.
         g.setLineWidth(1.3);
