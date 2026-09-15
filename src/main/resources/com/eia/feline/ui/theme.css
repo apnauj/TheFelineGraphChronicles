@@ -1,0 +1,369 @@
+/*
+ * Tema de comic impreso para The Feline Graph Chronicles.
+ *
+ * Tres cosas que conviene saber antes de tocar esto:
+ *
+ * 1. El CSS de JavaFX NO tiene animaciones ni transiciones. Todo el movimiento
+ *    esta en Java, con Timeline (ver ui/fx/Ink.java). Aqui solo hay estados.
+ * 2. Solo existen dos efectos: dropshadow e innershadow. La sombra dura y
+ *    desplazada que imita el error de registro de la impresion se consigue con
+ *    dropshadow de radio 0 y spread 1.
+ * 3. Las familias tipograficas se cargan en Java (ui/theme/Fonts.java) ANTES de
+ *    aplicar esta hoja. La regla @font-face de JavaFX admite un solo nombre de
+ *    familia y no acepta listas de respaldo, asi que el respaldo se decide alli.
+ *
+ * Los colores se declaran una vez como "looked-up colors" en .root; los mismos
+ * valores estan en Theme.java para lo que se pinta sobre Canvas.
+ */
+
+.root {
+    -paper:      #F4ECD8;
+    -paper-warm: #E9DCC0;
+    -paper-deep: #D8C8A6;
+    -ink:        #16131A;
+    -ink-soft:   #4A4157;
+
+    -pola:    #FF6B1A;
+    -minerva: #00A6C7;
+    -limon:   #D81B4A;
+    -churun:  #FFC42E;
+    -nina:    #FF6FA8;
+    -cape:    #2B5FD9;
+    -ok:      #2FA84F;
+    -error:   #D81B4A;
+
+    -fx-background-color: -paper;
+    -fx-font-family: "Fredoka";
+    -fx-font-size: 13.5px;
+    -fx-text-fill: -ink;
+}
+
+.mono {
+    -fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+}
+
+/* ---------- lettering ---------- */
+
+/* Bangers es un lettering de comic: va en mayusculas y necesita aire entre letras. */
+.display {
+    -fx-font-family: "Bangers";
+    -fx-font-size: 46px;
+    -fx-text-fill: -ink;
+}
+
+.title {
+    -fx-font-family: "Bangers";
+    -fx-font-size: 24px;
+    -fx-text-fill: -ink;
+}
+
+.subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: -ink-soft;
+}
+
+.caption {
+    -fx-font-size: 11.5px;
+    -fx-text-fill: -ink-soft;
+}
+
+/* La caja de texto de narracion, arriba a la izquierda de una vineta. */
+.caption-box {
+    -fx-background-color: -churun;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+    -fx-padding: 6 12 6 12;
+    -fx-font-family: "Bangers";
+    -fx-font-size: 14px;
+    -fx-text-fill: -ink;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.35), 0, 1, 3, 3);
+}
+
+/* El marcador del resultado: es el numero que el evaluador viene a ver. */
+.scoreboard {
+    -fx-font-family: "Bangers";
+    -fx-font-size: 32px;
+    -fx-text-fill: -ink;
+}
+
+.section-label {
+    -fx-font-family: "Bangers";
+    -fx-font-size: 14px;
+    -fx-text-fill: -ink;
+}
+
+.speech-text {
+    -fx-font-family: "Bangers";
+    -fx-font-size: 16px;
+    -fx-text-fill: -ink;
+    -fx-text-alignment: center;
+    -fx-line-spacing: 1;
+}
+
+/* ---------- vinetas ---------- */
+
+/*
+ * Una vineta de comic: papel, linea de tinta gruesa y la sombra dura desplazada.
+ * El radio 0 del dropshadow es lo que la hace dura; con radio la sombra se
+ * difumina y pasa a parecer una tarjeta de interfaz moderna.
+ */
+.panel {
+    -fx-background-color: -paper-warm;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.45), 0, 1, 5, 5);
+}
+
+.panel-sunken {
+    -fx-background-color: -paper-deep;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+}
+
+/* ---------- botones ---------- */
+
+/*
+ * Los botones son bloques de color plano con tinta alrededor y sombra dura.
+ * El "hundido" al pulsar se hace moviendo el boton sobre su propia sombra, que es
+ * exactamente lo que hace un sello al apoyarse.
+ */
+.button {
+    -fx-background-color: -paper;
+    -fx-text-fill: -ink;
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+    -fx-border-radius: 0;
+    -fx-padding: 9 18 9 18;
+    -fx-cursor: hand;
+    -fx-font-family: "Bangers";
+    -fx-font-size: 16px;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.9), 0, 1, 4, 4);
+}
+
+.button:hover {
+    -fx-background-color: -churun;
+    -fx-translate-x: -1;
+    -fx-translate-y: -1;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.9), 0, 1, 5, 5);
+}
+
+.button:pressed {
+    -fx-background-color: -churun;
+    -fx-translate-x: 4;
+    -fx-translate-y: 4;
+    -fx-effect: none;
+}
+
+.button:disabled {
+    -fx-opacity: 0.45;
+    -fx-cursor: default;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.4), 0, 1, 2, 2);
+}
+
+.button-primary {
+    -fx-background-color: -pola;
+    -fx-text-fill: -paper;
+}
+.button-primary:hover   { -fx-background-color: derive(#FF6B1A, 12%); }
+.button-primary:pressed { -fx-background-color: derive(#FF6B1A, -10%); }
+
+.button-ghost {
+    -fx-background-color: -paper;
+    -fx-text-fill: -ink;
+}
+
+.icon-button {
+    -fx-padding: 7 13 7 13;
+    -fx-font-size: 16px;
+}
+
+/* ---------- entradas ---------- */
+
+.text-area, .text-area .content {
+    -fx-background-color: -paper;
+    -fx-text-fill: -ink;
+    -fx-highlight-fill: -churun;
+    -fx-highlight-text-fill: -ink;
+}
+
+.text-area {
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+    -fx-border-radius: 0;
+    -fx-font-family: "Menlo", "Consolas", "DejaVu Sans Mono", monospace;
+    -fx-font-size: 12.5px;
+}
+
+.text-area:focused { -fx-border-color: -cape; }
+.text-area:disabled { -fx-opacity: 0.45; }
+
+.scroll-pane, .scroll-pane .viewport { -fx-background-color: transparent; }
+.scroll-bar { -fx-background-color: -paper-deep; }
+.scroll-bar .thumb {
+    -fx-background-color: -ink;
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+}
+.scroll-bar .thumb:hover { -fx-background-color: -cape; }
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button { -fx-background-color: transparent; -fx-padding: 0; }
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow  { -fx-shape: " "; -fx-padding: 0; }
+
+/* ---------- avisos, como bocadillos ---------- */
+
+.banner-error {
+    -fx-background-color: -limon;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+    -fx-padding: 12 16 12 16;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.5), 0, 1, 4, 4);
+}
+
+.banner-warn {
+    -fx-background-color: -churun;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+    -fx-padding: 12 16 12 16;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.5), 0, 1, 4, 4);
+}
+
+.banner-info {
+    -fx-background-color: -minerva;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+    -fx-padding: 12 16 12 16;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.5), 0, 1, 4, 4);
+}
+
+/* Sobre los bocadillos de color el texto va en tinta: es lo unico que se lee. */
+.banner-error .label, .banner-warn .label, .banner-info .label { -fx-text-fill: -ink; }
+
+.text-error { -fx-text-fill: -limon; }
+.text-warn  { -fx-text-fill: -ink; }
+.text-ok    { -fx-text-fill: -ok; }
+
+/* ---------- vinetas de mision ---------- */
+
+.mission-card {
+    -fx-background-color: -paper-warm;
+    -fx-border-color: -ink;
+    -fx-border-width: 4;
+    -fx-cursor: hand;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.55), 0, 1, 6, 6);
+}
+
+.mission-card:hover {
+    -fx-background-color: -paper;
+    -fx-effect: dropshadow(gaussian, rgba(22,19,26,0.75), 0, 1, 10, 10);
+}
+
+.mission-number {
+    -fx-font-family: "Bangers";
+    -fx-font-size: 13px;
+    -fx-text-fill: -ink;
+}
+
+.badge {
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 2.5;
+    -fx-padding: 3 10 3 10;
+    -fx-font-family: "Bangers";
+    -fx-font-size: 12px;
+    -fx-text-fill: -ink;
+}
+
+.badge-pending { -fx-background-color: -limon; -fx-text-fill: -paper; }
+.badge-ready   { -fx-background-color: -ok;    -fx-text-fill: -paper; }
+
+/* ---------- barra de reproduccion ---------- */
+
+.slider .track {
+    -fx-background-color: -paper-deep;
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 2.5;
+}
+.slider .thumb {
+    -fx-background-color: -pola;
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 2.5;
+}
+
+.progress-bar > .track {
+    -fx-background-color: -paper;
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+}
+.progress-bar > .bar {
+    -fx-background-color: -pola;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 7;
+}
+
+.progress-indicator { -fx-progress-color: -pola; }
+
+/* ---------- combo box ---------- */
+
+.combo-box {
+    -fx-background-color: -paper;
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+    -fx-border-radius: 0;
+    -fx-padding: 1;
+    -fx-font-family: "Fredoka";
+}
+
+.combo-box:hover { -fx-background-color: -churun; }
+.combo-box:disabled { -fx-opacity: 0.45; }
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -ink;
+    -fx-padding: 5 10 5 10;
+}
+
+.combo-box .arrow-button { -fx-background-color: transparent; }
+.combo-box .arrow { -fx-background-color: -ink; }
+
+.combo-box-popup .list-view {
+    -fx-background-color: -paper;
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 3;
+}
+
+.combo-box-popup .list-view .list-cell:filled:hover,
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: -pola;
+    -fx-text-fill: -paper;
+}
+
+/* ---------- casillas ---------- */
+
+.check-box { -fx-text-fill: -ink; }
+.check-box .box {
+    -fx-background-color: -paper;
+    -fx-background-radius: 0;
+    -fx-border-color: -ink;
+    -fx-border-width: 2.5;
+    -fx-border-radius: 0;
+    -fx-padding: 3;
+}
+.check-box:selected .mark { -fx-background-color: -ink; }
+.check-box:selected .box  { -fx-background-color: -churun; }
+
+/* ---------- separadores ---------- */
+
+.separator .line {
+    -fx-border-color: -ink;
+    -fx-border-width: 3 0 0 0;
+}

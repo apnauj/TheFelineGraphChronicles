@@ -1,3 +1,6 @@
+### Maven ###
+target/
+
 ### IntelliJ IDEA ###
 out/
 !**/src/main/**/out/
@@ -29,4 +32,7 @@ bin/
 .vscode/
 
 ### Mac OS ###
+.DS_Store
+
+### macOS ###
 .DS_Store
