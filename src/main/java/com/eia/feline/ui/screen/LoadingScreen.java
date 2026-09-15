@@ -19,6 +19,8 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -90,10 +92,7 @@ public final class LoadingScreen extends StackPane {
         backdrop.setMouseTransparent(true);
         buildBackdrop();
 
-        Text title = Ink.letter("THE FELINE GRAPH CHRONICLES", 54, Theme.CHURUN);
-        title.setEffect(Ink.misprint(Theme.fade(Theme.LIMON, 0.55), 5, 5));
-
-        Text subtitle = Ink.letter("POLA Y MINERVA CONTRA LIMON", 21, Theme.PAPER);
+        Node masthead = buildMasthead();
 
         progress.setPrefWidth(440);
         progress.setMinHeight(22);
@@ -108,9 +107,9 @@ public final class LoadingScreen extends StackPane {
         progress.setVisible(autoAdvance);
         progress.setManaged(autoAdvance);
 
-        VBox heading = new VBox(8, title, subtitle);
+        VBox heading = new VBox(0, masthead);
         heading.setAlignment(Pos.CENTER);
-        heading.setPadding(new Insets(46, 40, 0, 40));
+        heading.setPadding(new Insets(24, 40, 0, 40));
         // Sin esto el VBox se estira a toda la altura del StackPane y centra su
         // contenido verticalmente, ignorando la alineacion de arriba.
         heading.setMaxHeight(Region.USE_PREF_SIZE);
@@ -192,6 +191,53 @@ public final class LoadingScreen extends StackPane {
         StackPane.setAlignment(caption, Pos.TOP_LEFT);
         StackPane.setMargin(caption, new Insets(330, 0, 0, 52));
         return caption;
+    }
+
+    /**
+     * La cabecera, montada como el logotipo de una portada de comic: tres lineas
+     * de distinto tamano, muy juntas, sobre una banda de tinta.
+     *
+     * Una sola linea de 54 px se perdia en el ancho de la ventana y dejaba la
+     * portada vacia. En un comic el titulo NO es una linea de texto: es una pieza
+     * grafica que ocupa el tercio de arriba y manda sobre todo lo demas.
+     */
+    private Node buildMasthead() {
+        Text the = Ink.letter("THE", 34, Theme.PAPER);
+        Text feline = Ink.letter("FELINE GRAPH", 92, Theme.CHURUN);
+        Text chronicles = Ink.letter("CHRONICLES", 62, Theme.POLA);
+
+        feline.setEffect(Ink.misprint(Theme.fade(Theme.LIMON, 0.65), 7, 7));
+        chronicles.setEffect(Ink.misprint(Theme.fade(Theme.CAPE, 0.60), 5, 5));
+
+        // Espaciado negativo: las lineas de un logotipo de comic se solapan un
+        // poco. Con el interlineado normal se leerian como tres frases sueltas.
+        VBox stack = new VBox(-14, the, feline, chronicles);
+        stack.setAlignment(Pos.CENTER);
+
+        // Banda de tinta detras, que es lo que amarra el logotipo a la pagina.
+        //
+        // Es el FONDO de la caja, no un Rectangle dentro de ella. Un Rectangle
+        // atado al tamano de un hermano dentro del mismo StackPane crea un ciclo
+        // de medicion: la banda depende del alto del texto, el StackPane se mide
+        // por la mayor de las dos, el texto se estira a ese alto, y la banda
+        // vuelve a crecer. El sintoma fue una banda que se comia media pantalla.
+        // Es el mismo fallo que documenta Ink.paperBackground, y volvio a caer
+        // aqui. Un fondo no participa en la medicion: la caja se ajusta al texto.
+        StackPane banded = new StackPane(stack);
+        banded.setBackground(new Background(new BackgroundFill(Theme.INK, null, null)));
+        banded.setPadding(new Insets(14, 40, 18, 40));
+        banded.setMaxWidth(Region.USE_PREF_SIZE);
+        banded.setMaxHeight(Region.USE_PREF_SIZE);
+        banded.setRotate(-1.6);
+
+        Label tagline = new Label("POLA Y MINERVA CONTRA LIMON  \u00B7  4 MISIONES  \u00B7  6 ALGORITMOS");
+        tagline.getStyleClass().add("caption-box");
+        tagline.setRotate(1.1);
+
+        VBox head = new VBox(12, banded, tagline);
+        head.setAlignment(Pos.CENTER);
+        head.setMaxHeight(Region.USE_PREF_SIZE);
+        return head;
     }
 
     /** Segundo cartucho de narracion, debajo del primero. */

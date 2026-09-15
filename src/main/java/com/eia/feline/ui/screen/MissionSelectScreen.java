@@ -32,6 +32,10 @@ import javafx.util.Duration;
  */
 public final class MissionSelectScreen extends BorderPane {
 
+    /** Caja donde se encaja el retrato, en pixeles. Fija a proposito: ver card(). */
+    private static final double PORTRAIT_W = 212;
+    private static final double PORTRAIT_H = 340;
+
     public MissionSelectScreen(Navigator navigator) {
         setPadding(new Insets(30, 40, 26, 40));
         // Cada pantalla pinta su propio papel tramado en vez de fiarse del
@@ -113,12 +117,29 @@ public final class MissionSelectScreen extends BorderPane {
         StackPane portraitHolder = new StackPane(portrait);
         portraitHolder.setMinHeight(140);
 
-        // El arte real crece con la vineta; los marcadores dibujados por codigo se
-        // quedan a su tamano, que para un marcador ya esta bien.
+        // El retrato se encaja en una caja FIJA, por ancho y por alto.
+        //
+        // Dos razones, y las dos se pagaron caras:
+        //
+        // 1. Atando solo fitHeight, con preserveRatio el ancho sale de la
+        //    proporcion de la imagen y se sale de la vineta: los gatos son de 0,74
+        //    y a 400 px de alto piden 297 de ancho, mas de los 232 que hay. Con
+        //    churun, que es apaisado (4,6), el desbordamiento es enorme.
+        // 2. Atar fitWidth al ancho del contenedor arregla eso y crea un ciclo de
+        //    medicion: ImageView no es redimensionable, asi que sus limites entran
+        //    en el ancho preferido del padre, que agranda al padre, que agranda a
+        //    la imagen. La pantalla acabo midiendo 1579 px de ancho en una ventana
+        //    de 1280.
+        //
+        // Con valores fijos no hay realimentacion posible. La imagen no crece con
+        // la ventana, que es un precio pequeno por un layout que no se descuadra.
         if (portrait instanceof ImageView art) {
             art.setPreserveRatio(true);
-            art.fitHeightProperty().bind(portraitHolder.heightProperty().subtract(18));
+            art.setFitWidth(PORTRAIT_W);
+            art.setFitHeight(PORTRAIT_H);
         }
+        // Red de seguridad: nada puede pintarse fuera de la vineta.
+        Ink.clipToBounds(portraitHolder);
         // El retrato se queda con el espacio sobrante y el texto baja al pie de la
         // vineta, como el cartucho de narracion de un comic.
         VBox.setVgrow(portraitHolder, Priority.ALWAYS);

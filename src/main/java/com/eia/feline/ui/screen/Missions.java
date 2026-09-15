@@ -64,8 +64,7 @@ public final class Missions {
                 "El botin de churun",
                 "Maximizar el churun, incluso con pasadizos envenenados",
                 Theme.CHURUN,
-                // Todavia no hay arte de churun: manda Nero, que envenena los pasadizos.
-                () -> portrait("nero", Theme.CHURUN),
+                () -> portrait("churun", Theme.CHURUN),
                 new MissionThreeSolver(),
                 "Floyd-Warshall y Bellman-Ford",
                 MaxWalkVisualizer::new,
