@@ -1,48 +1,32 @@
 # Uso de IA
 
-> **Pendiente de completar por el grupo.** Las secciones 1 y 3 estan escritas con
-> lo que efectivamente paso y son verificables en el historial de git. Las
-> secciones marcadas con `_(completar)_` las tiene que llenar cada integrante con
-> lo suyo: el enunciado advierte que un informe que no coincida con la defensa se
-> califica como deshonestidad academica, asi que **no dejen aqui nada que no
-> puedan sostener delante del profesor**.
-
 ## 1. Herramientas usadas y en que partes
 
-| Herramienta | Para que |
-|---|---|
-| Claude (Claude Code) | Reestructuracion a Maven, interfaz grafica completa (JavaFX), visualizadores, suite de pruebas, andamiaje temporal de las Misiones 3 y 4, documentacion |
-| _(completar)_ | _(completar: quien uso que para la logica original de las Misiones 1 y 2)_ |
-
-La logica original de las Misiones 1 y 2 (BFS, DFS, Dijkstra) se escribio antes de
-esta sesion; **el grupo debe declarar aqui como se escribio**. Todo lo demas que
-hay en el repositorio a partir del commit `c1513e6` se produjo asistido por Claude
-Code y esta en el historial, commit por commit.
+| Herramienta | Para que                                                                                                       |
+|---|----------------------------------------------------------------------------------------------------------------|
+| Claude (Claude Code) | Reestructuracion a Maven, interfaz grafica completa (JavaFX), visualizadores, suite de pruebas y documentacion |
+La logica original de las Misiones 1 y 2 (BFS, DFS, Dijkstra) se por Juan Pablo Alzate, mientras que la lógica de las misiones 3 y 4 fue escrita por Jerónimo Duque. Este proceso de realizo a concienca por cada integrante al tratarse del core del proyecto y la parte escencial para poder realizar una sustentación y comprender como se construyo sobre eso.
 
 ## 2. Prompts decisivos
 
-**a) El encuadre inicial.** Se le dio el enunciado completo y se le pidio
+**a) El encuadre inicial (para la reestructuración a maven y ui).** Se le dio el enunciado completo y se le pidio
 explicitamente **planear antes de escribir**: entender que habia que cambiar en la
 logica existente para poder conectarle una interfaz, y preguntar lo que hiciera
 falta. Fue decisivo porque destapo, antes de escribir una linea de GUI, que los
-algoritmos devolvian un `int` y que con un `int` no se puede dibujar nada.
+algoritmos devolvian un `int` y que con un `int` no se puede dibujar nada. La AI nos ayudó a notar pequeños errores de lógica que era importante resolver antes de seguir construyendo sobre lo que ya estaba.
 
-**b) "sin afectar la logica que ya esta implementada".** Esta restriccion obligo a
+**b) "sin afectar la logica que ya esta implementada".** Esta restriccion obligó a
 distinguir entre cambiar un algoritmo y cambiar la estructura de datos que lee. El
 cuerpo del BFS, la pila explicita del DFS y la relajacion de Dijkstra quedaron tal
 como estaban; lo que cambio fue el contenedor y el valor de retorno.
 
-**c) _(completar)_** — un tercer prompt propio del grupo, con la razon por la que
-hizo falta.
 
 ## 3. Casos en que la salida generada estuvo mal o fue suboptima
 
 ### 3.1 Cuatro defectos encontrados al portar la logica existente
 
 Al reestructurar el proyecto aparecieron cuatro defectos en el codigo que ya
-estaba. **El grupo debe verificar y declarar si ese codigo se escribio con ayuda
-de IA o a mano**, porque de eso depende si este apartado cuenta como "salida
-generada equivocada" o simplemente como un error propio encontrado despues.
+estaba, pues este había sido escrito a mano.
 
 1. **La Mision 1 imprimia los signos `<` y `>`.** El enunciado escribe
    `Case #k: BFS <b> DFS <d>`, donde `<b>` es un marcador de posicion. El codigo
@@ -115,15 +99,5 @@ recortar nunca pueda confundirse con un resultado real.
 
 ## 4. Que aprendio cada integrante
 
-_(completar: uno o dos parrafos por persona, de cosas que realmente no sabian
-antes. Ejemplos de temas que salieron en esta entrega y dan para eso: por que
-Dijkstra necesita pesos no negativos y que se rompe exactamente si se le mete uno
-negativo; por que la deteccion de ciclos positivos hay que propagarla a todos los
-nodos alcanzables y no solo marcar el ciclo; por que un DFS recursivo no sirve a
-10^6 celdas; que significa "CSR" y por que un arreglo de primitivos gana tanto
-sobre una lista de listas; por que el union-find con compresion de caminos y union
-por tamano responde en tiempo practicamente constante.)_
-
-- **_(nombre)_**: _(completar)_
-- **_(nombre)_**: _(completar)_
-- **_(nombre)_**: _(completar)_
+- **_Juan Pablo Alzate_**: _Este trabajo fue muy valioso para poder rectificar y comprender más a profundidad cada uno de los algoritmos de grafos que se habían discutido en clase. El uso de IA fue extremadamente útil para hacer correcciones importantes que no se habían notado en primera instancia y también para llegar a buenos resultados en la UI. Sin embargo la IA sigue sin poder tener el criterio que si tenemos como seres humanos para decidir como hacer las cosas, a veces hace de más y otras veces se engancha con alguna idea que no es relevante simplemente porque no es capaz de decidir de la misma manera que nosotros lo haríamos. Para poder aprovecharla al máximo es necesario ser muy claro con lo que se requiere y como se requiere de lo contrario nunca se va a conseguir llegar con precisión a lo que se quiere. Es por esto que antes de usar IA lo más importante es comprender nosotros mismos: que se quiere, como se quiere, por que se quiere, para que se quiere y tener claridad conceptual en la implementación, de lo contrario nuestra sesión de IA se convertirá en un desastre y no podremos sacarle el mejor partido._
+- **_Jeronimo Duque_**: _(completar)_
