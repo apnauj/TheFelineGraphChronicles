@@ -301,7 +301,7 @@ public final class MissionScreen<P> extends BorderPane {
             // La seccion 2.3 exige que la respuesta numerica siga visible y que se
             // diga por que no hay dibujo.
             showBanner("banner-warn", "Dibujo omitido", visualizer.overBudgetMessage(payload));
-            showMessageCanvas("La respuesta esta calculada y visible a la derecha.");
+            showMessageCanvas("La respuesta esta calculada y visible a la izquierda, en SALIDA.");
             return;
         }
 
