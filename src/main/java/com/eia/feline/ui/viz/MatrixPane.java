@@ -35,8 +35,11 @@ public final class MatrixPane {
         scroll.setFitToHeight(false);
         scroll.setPannable(true);
         scroll.getStyleClass().add("panel-sunken");
-        scroll.setMinHeight(150);
-        scroll.setPrefHeight(230);
+        scroll.setMinHeight(110);
+        scroll.setPrefHeight(178);
+        // El grafo necesita el alto mas que la matriz: la matriz se desplaza,
+        // el grafo no.
+        scroll.setMaxHeight(210);
     }
 
     public ScrollPane node() { return scroll; }
@@ -50,13 +53,13 @@ public final class MatrixPane {
         canvas.setHeight(height);
 
         GraphicsContext g = canvas.getGraphicsContext2D();
-        g.setFill(Theme.BG);
+        g.setFill(Theme.PAPER);
         g.fillRect(0, 0, width, height);
         g.setFont(Font.font(11));
         g.setTextAlign(TextAlignment.CENTER);
 
         // Encabezados de columna y de fila.
-        g.setFill(Theme.MUTED);
+        g.setFill(Theme.INK_SOFT);
         for (int j = 0; j < n; j++) {
             g.fillText(String.valueOf(j), HEADER_W + j * CELL_W + CELL_W / 2, CELL_H * 0.72);
         }
@@ -74,7 +77,7 @@ public final class MatrixPane {
                     g.setFill(Theme.fade(Theme.CHURUN, 0.22));
                     g.fillRect(x + 1, y + 1, CELL_W - 2, CELL_H - 2);
                 } else if ((i + j) % 2 == 0) {
-                    g.setFill(Theme.fade(Theme.PANEL, 0.6));
+                    g.setFill(Theme.fade(Theme.PAPER_WARM, 0.6));
                     g.fillRect(x + 1, y + 1, CELL_W - 2, CELL_H - 2);
                 }
 
@@ -84,11 +87,11 @@ public final class MatrixPane {
                     g.setFill(Theme.LIMON);
                 } else if (best[i][j] == ReferenceMaxWalk.NONE) {
                     text = "-";
-                    g.setFill(Theme.fade(Theme.MUTED, 0.7));
+                    g.setFill(Theme.fade(Theme.INK_SOFT, 0.7));
                 } else {
                     text = String.valueOf(best[i][j]);
                     g.setFill(answer ? Theme.CHURUN
-                            : (best[i][j] < 0 ? Theme.fade(Theme.LIMON, 0.9) : Theme.TEXT));
+                            : (best[i][j] < 0 ? Theme.fade(Theme.LIMON, 0.9) : Theme.INK));
                 }
                 g.fillText(text, x + CELL_W / 2, y + CELL_H * 0.72);
             }

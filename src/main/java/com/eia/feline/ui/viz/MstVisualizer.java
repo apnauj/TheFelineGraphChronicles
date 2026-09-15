@@ -47,7 +47,7 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
     private int step;
 
     public MstVisualizer() {
-        scoreboard.getStyleClass().addAll("mono", "title");
+        scoreboard.getStyleClass().add("scoreboard");
         queueLabel.getStyleClass().add("section-label");
 
         queueScroll.getStyleClass().add("panel-sunken");
@@ -113,8 +113,9 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         canvas.setWidth(Math.max(1, canvasHolder.getWidth()));
         canvas.setHeight(Math.max(1, canvasHolder.getHeight()));
         if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1) {
+            double radius = Math.max(10, Math.min(22, 340.0 / Math.max(5, current.nodes())));
             double[][] positions = SpringLayout.compute(current.nodes(), current.cables(),
-                    canvas.getWidth(), canvas.getHeight(), 42, 1234L);
+                    canvas.getWidth(), canvas.getHeight(), radius + 16, radius * 2 + 22, 1234L);
             nodeX = positions[0];
             nodeY = positions[1];
         }
@@ -125,7 +126,7 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
     private void repaint() {
         GraphicsContext g = canvas.getGraphicsContext2D();
         double w = canvas.getWidth(), h = canvas.getHeight();
-        g.setFill(Theme.BG);
+        g.setFill(Theme.PAPER);
         g.fillRect(0, 0, w, h);
         if (current == null || nodeX.length == 0) return;
 
@@ -133,11 +134,11 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         int[] order = current.order();
         boolean[] accepted = current.accepted();
         int examined = Math.min(step, order.length);
-        double radius = Math.max(8, Math.min(17, 280.0 / Math.max(4, current.nodes())));
+        double radius = Math.max(10, Math.min(22, 340.0 / Math.max(5, current.nodes())));
 
         // 1. Todos los cables disponibles, apagados.
         g.setLineWidth(1.3);
-        g.setStroke(Theme.fade(Theme.STROKE, 0.85));
+        g.setStroke(Theme.fade(Theme.INK, 0.85));
         for (int e = 0; e < cables.size(); e++) {
             int a = cables.from(e), b = cables.to(e);
             if (a == b) continue;
@@ -151,8 +152,12 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
             if (a == b) continue;
 
             if (accepted[i]) {
+                // Tinta primero, color encima: entintado y coloreado, como una vineta.
+                g.setStroke(Theme.INK);
+                g.setLineWidth(8);
+                g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
                 g.setStroke(Theme.CHURUN);
-                g.setLineWidth(4);
+                g.setLineWidth(4.5);
                 g.strokeLine(nodeX[a], nodeY[a], nodeX[b], nodeY[b]);
             } else if (i == examined - 1) {
                 // Solo el rechazo mas reciente se marca, para no llenar el mapa de tachones.
@@ -170,11 +175,11 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         for (int v = 0; v < current.nodes(); v++) {
             g.setFill(Theme.MINERVA);
             g.fillOval(nodeX[v] - radius, nodeY[v] - radius, radius * 2, radius * 2);
-            g.setStroke(Theme.fade(Theme.TEXT, 0.35));
-            g.setLineWidth(1.1);
+            g.setStroke(Theme.INK);
+            g.setLineWidth(2.6);
             g.strokeOval(nodeX[v] - radius, nodeY[v] - radius, radius * 2, radius * 2);
             if (radius >= 10) {
-                g.setFill(Theme.BG);
+                g.setFill(Theme.PAPER);
                 // Las intersecciones se numeran de 1 a N en el enunciado de esta mision.
                 g.fillText(String.valueOf(v + 1), nodeX[v], nodeY[v] + radius * 0.38);
             }
@@ -195,7 +200,7 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
         queueCanvas.setHeight(Math.max(10, order.length * ROW_H + 8));
 
         GraphicsContext g = queueCanvas.getGraphicsContext2D();
-        g.setFill(Theme.BG);
+        g.setFill(Theme.PAPER);
         g.fillRect(0, 0, queueCanvas.getWidth(), queueCanvas.getHeight());
         g.setFont(Font.font(11.5));
 
@@ -209,7 +214,7 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
             boolean isCurrent = i == examined - 1;
 
             if (isCurrent) {
-                g.setFill(Theme.fade(Theme.TEXT, 0.10));
+                g.setFill(Theme.fade(Theme.INK, 0.10));
                 g.fillRect(2, y, width - 4, ROW_H - 2);
             }
 
@@ -217,7 +222,7 @@ public final class MstVisualizer implements Visualizer<MissionFourSolver.Case> {
             String cost = String.valueOf(cables.weight(e));
 
             if (!done) {
-                g.setFill(Theme.fade(Theme.MUTED, 0.55));
+                g.setFill(Theme.fade(Theme.INK_SOFT, 0.55));
             } else if (accepted[i]) {
                 running += cables.weight(e);
                 g.setFill(Theme.CHURUN);

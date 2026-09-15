@@ -1,0 +1,10 @@
+Las tipografias Bangers y Fredoka se distribuyen bajo la SIL Open Font License 1.1.
+
+  Bangers  - Copyright (c) Vernon Adams, Google Fonts
+  Fredoka  - Copyright (c) Milena Brandao, Hafontia, Google Fonts
+
+Texto completo de la licencia: https://openfontlicense.org/
+
+La OFL permite usarlas, incrustarlas y redistribuirlas, incluso en proyectos
+comerciales, siempre que se conserve este aviso y que las fuentes no se vendan
+por si solas. No se han modificado.

@@ -3,6 +3,7 @@ package com.eia.feline.ui.screen;
 import com.eia.feline.missions.CaseResult;
 import com.eia.feline.missions.InputFormatException;
 import com.eia.feline.missions.MissionSolver;
+import com.eia.feline.ui.fx.Ink;
 import com.eia.feline.ui.theme.Theme;
 import com.eia.feline.ui.viz.Playback;
 import com.eia.feline.ui.viz.Visualizer;
@@ -59,7 +60,8 @@ public final class MissionScreen<P> extends BorderPane {
         this.mission = mission;
         this.visualizer = (mission.visualizer() == null) ? null : mission.visualizer().get();
 
-        setPadding(new Insets(20, 26, 20, 26));
+        setPadding(new Insets(18, 24, 18, 24));
+        Ink.paperBackground(this, Theme.PAPER, Theme.CAPE, 0.16);
         setTop(header(navigator));
         setCenter(body());
         setBottom(playbackBar());

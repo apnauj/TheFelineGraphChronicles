@@ -3,6 +3,7 @@ package com.eia.feline.ui;
 import com.eia.feline.ui.screen.LoadingScreen;
 import com.eia.feline.ui.screen.MissionSelectScreen;
 import com.eia.feline.ui.screen.Navigator;
+import com.eia.feline.ui.theme.Fonts;
 import com.eia.feline.ui.theme.Theme;
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
@@ -29,7 +30,12 @@ public final class App extends Application {
 
     @Override
     public void start(Stage stage) {
-        root.setStyle("-fx-background-color: #14121F;");
+        // Antes de nada: el CSS pide "Bangers" y "Fredoka" por nombre, y si no
+        // estan registradas cuando se aplica la hoja, la primera pasada de estilos
+        // las ignora en silencio y el texto sale con la fuente por defecto.
+        Fonts.install();
+
+        root.setStyle("-fx-background-color: #F4ECD8;");
 
         Navigator navigator = this::swapTo;
 
@@ -43,7 +49,7 @@ public final class App extends Application {
         stage.setMinHeight(MIN_HEIGHT);
 
         // La pantalla de carga se muestra sola y avisa cuando termina.
-        LoadingScreen loading = new LoadingScreen(() -> navigator.go(new MissionSelectScreen(navigator)));
+        LoadingScreen loading = LoadingScreen.intro(() -> navigator.go(new MissionSelectScreen(navigator)));
         root.getChildren().add(loading);
         loading.play();
 

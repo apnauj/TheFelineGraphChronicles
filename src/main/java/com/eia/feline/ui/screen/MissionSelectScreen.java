@@ -1,5 +1,6 @@
 package com.eia.feline.ui.screen;
 
+import com.eia.feline.ui.fx.Ink;
 import com.eia.feline.ui.theme.Theme;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
@@ -9,10 +10,11 @@ import javafx.animation.Timeline;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.ImageView;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -31,9 +33,21 @@ import javafx.util.Duration;
 public final class MissionSelectScreen extends BorderPane {
 
     public MissionSelectScreen(Navigator navigator) {
-        setPadding(new Insets(34, 40, 34, 40));
+        setPadding(new Insets(30, 40, 26, 40));
+        // Cada pantalla pinta su propio papel tramado en vez de fiarse del
+        // contenedor. Va como Background y no como un nodo: ver Ink.paperBackground.
+        Ink.paperBackground(this, Theme.PAPER, Theme.CAPE, 0.20);
 
-        Label title = new Label("Elige tu mision");
+        Button back = new Button("< PORTADA");
+        back.getStyleClass().add("button-ghost");
+        back.setOnAction(e -> {
+            LoadingScreen cover = LoadingScreen.cover(
+                    () -> navigator.go(new MissionSelectScreen(navigator)));
+            navigator.go(cover);
+            cover.play();
+        });
+
+        Label title = new Label("ELIGE TU MISION");
         title.getStyleClass().add("display");
 
         Label blurb = new Label(
@@ -43,20 +57,31 @@ public final class MissionSelectScreen extends BorderPane {
         blurb.setWrapText(true);
         blurb.setMaxWidth(760);
 
-        VBox header = new VBox(8, title, blurb);
-        header.setPadding(new Insets(0, 0, 26, 0));
+        HBox titleRow = new HBox(16, back, title);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
 
-        FlowPane cards = new FlowPane(20, 20);
+        VBox header = new VBox(8, titleRow, blurb);
+        header.setPadding(new Insets(0, 0, 22, 0));
+
+        // HBox y no FlowPane: con setFillHeight(true) el HBox estira las vinetas a
+        // la altura de la fila por si mismo. Atar la altura de la vineta a la del
+        // contenedor (o a la de la pantalla) crea un ciclo de medicion -- el alto
+        // del padre depende del alto preferido del hijo, que depende del alto del
+        // padre -- y el resultado fue una pantalla de 978 px dentro de una escena
+        // de 820, con el contenido desplazado fuera de la ventana.
+        HBox cards = new HBox(20);
         cards.setAlignment(Pos.TOP_LEFT);
+        cards.setFillHeight(true);
+
         for (MissionDescriptor<?> mission : Missions.all()) {
-            cards.getChildren().add(card(mission, navigator));
+            Node card = card(mission, navigator);
+            HBox.setHgrow(card, Priority.ALWAYS);
+            cards.getChildren().add(card);
         }
 
-        StackPane cardArea = new StackPane(cards);
-        StackPane.setAlignment(cards, Pos.CENTER_LEFT);
+        VBox body = new VBox(header, cards);
+        VBox.setVgrow(cards, Priority.ALWAYS);
 
-        VBox body = new VBox(header, cardArea);
-        VBox.setVgrow(cardArea, Priority.ALWAYS);
         setCenter(body);
         setBottom(footer());
     }
@@ -86,21 +111,40 @@ public final class MissionSelectScreen extends BorderPane {
 
         Node portrait = mission.portrait().get();
         StackPane portraitHolder = new StackPane(portrait);
-        portraitHolder.setMinHeight(132);
-        portraitHolder.setPrefHeight(132);
+        portraitHolder.setMinHeight(140);
+
+        // El arte real crece con la vineta; los marcadores dibujados por codigo se
+        // quedan a su tamano, que para un marcador ya esta bien.
+        if (portrait instanceof ImageView art) {
+            art.setPreserveRatio(true);
+            art.fitHeightProperty().bind(portraitHolder.heightProperty().subtract(18));
+        }
+        // El retrato se queda con el espacio sobrante y el texto baja al pie de la
+        // vineta, como el cartucho de narracion de un comic.
+        VBox.setVgrow(portraitHolder, Priority.ALWAYS);
 
         VBox text = new VBox(6, number, name, tagline, algorithms);
         VBox content = new VBox(12, portraitHolder, text, badge);
         content.setAlignment(Pos.TOP_LEFT);
+        content.setFillWidth(true);
 
         VBox card = new VBox(content);
+        VBox.setVgrow(content, Priority.ALWAYS);
         card.getStyleClass().add("mission-card");
         card.setPrefWidth(272);
-        card.setPrefHeight(420);
+        card.setMinWidth(210);
+        card.setMaxWidth(Double.MAX_VALUE);
+        card.setMinHeight(320);
+        // maxHeight sin limite es lo que permite que el HBox la estire; con el
+        // valor por defecto se quedaria en su altura preferida.
+        card.setMaxHeight(Double.MAX_VALUE);
 
-        DropShadow glow = new DropShadow(0, mission.accent());
-        glow.setSpread(0.18);
-        card.setEffect(glow);
+        // Un grado y medio de giro, alternando el sentido: basta para que la pagina
+        // deje de parecer una rejilla de software y parezca una plancha dibujada.
+        card.setRotate((mission.number() % 2 == 0) ? 1.4 : -1.4);
+
+        DropShadow misprint = Ink.misprint(Theme.fade(Theme.INK, 0.55), 6, 6);
+        card.setEffect(misprint);
 
         // Rebote perpetuo del retrato, desfasado por mision para que no latan al unisono.
         Timeline idle = new Timeline(
@@ -113,19 +157,26 @@ public final class MissionSelectScreen extends BorderPane {
         idle.setCycleCount(Animation.INDEFINITE);
         idle.play();
 
-        card.setOnMouseEntered(e -> hover(card, glow, mission.accent(), true));
-        card.setOnMouseExited(e -> hover(card, glow, mission.accent(), false));
+        double restAngle = card.getRotate();
+        card.setOnMouseEntered(e -> hover(card, misprint, restAngle, true));
+        card.setOnMouseExited(e -> hover(card, misprint, restAngle, false));
         card.setOnMouseClicked(e -> navigator.go(new MissionScreen<>(mission, navigator)));
 
         return card;
     }
 
-    private void hover(Region card, DropShadow glow, Color accent, boolean entering) {
-        Timeline t = new Timeline(new KeyFrame(Duration.millis(160),
-                new KeyValue(card.scaleXProperty(), entering ? 1.035 : 1.0, Interpolator.EASE_OUT),
-                new KeyValue(card.scaleYProperty(), entering ? 1.035 : 1.0, Interpolator.EASE_OUT),
-                new KeyValue(card.translateYProperty(), entering ? -6 : 0, Interpolator.EASE_OUT),
-                new KeyValue(glow.radiusProperty(), entering ? 28 : 0, Interpolator.EASE_OUT)));
+    /**
+     * Al pasar por encima la vineta se endereza y se levanta. No hay transiciones
+     * en el CSS de JavaFX, asi que el movimiento se hace aqui con un Timeline.
+     */
+    private void hover(Region card, DropShadow misprint, double restAngle, boolean entering) {
+        Timeline t = new Timeline(new KeyFrame(Duration.millis(150),
+                new KeyValue(card.scaleXProperty(), entering ? 1.04 : 1.0, Interpolator.EASE_OUT),
+                new KeyValue(card.scaleYProperty(), entering ? 1.04 : 1.0, Interpolator.EASE_OUT),
+                new KeyValue(card.rotateProperty(), entering ? 0 : restAngle, Interpolator.EASE_OUT),
+                new KeyValue(card.translateYProperty(), entering ? -7 : 0, Interpolator.EASE_OUT),
+                new KeyValue(misprint.offsetXProperty(), entering ? 11 : 6, Interpolator.EASE_OUT),
+                new KeyValue(misprint.offsetYProperty(), entering ? 11 : 6, Interpolator.EASE_OUT)));
         t.play();
     }
 
@@ -135,7 +186,7 @@ public final class MissionSelectScreen extends BorderPane {
 
         Label credit = new Label("Lenguajes y Compiladores - Universidad EIA");
         credit.getStyleClass().add("caption");
-        credit.setTextFill(Theme.MUTED);
+        credit.setTextFill(Theme.INK_SOFT);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);

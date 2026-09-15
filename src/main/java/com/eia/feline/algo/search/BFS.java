@@ -6,8 +6,12 @@ import java.util.List;
 import java.util.Queue;
 
 /**
- * BFS con cola explicita. Devuelve la distancia MINIMA en numero de pasos de
+ * BFS con una cola FIFO. Devuelve la distancia MINIMA en numero de pasos de
  * start a end, o -1 si no es alcanzable.
+ *
+ * (Antes este comentario decia "cola explicita". Es la pila del DFS la que se
+ * llama explicita, porque lo es frente a la recursion; en el BFS la cola no se
+ * opone a nada y el adjetivo solo despistaba.)
  *
  * Se marca visitado AL ENCOLAR: eso es lo que garantiza que cada nodo se descubra
  * por el camino mas corto y que entre a la cola exactamente una vez.

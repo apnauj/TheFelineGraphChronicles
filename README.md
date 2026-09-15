@@ -90,6 +90,25 @@ escribieron para poder construir y demostrar la interfaz mientras otro integrant
 escribe las versiones definitivas. La aplicacion lo dice en pantalla. Los paquetes
 `algo/maxwalk/` y `algo/mst/` estan vacios a proposito, reservados para ellas.
 
+## Recursos de terceros
+
+El enunciado pide declarar cualquier libreria usada solo para dibujar. No se usa
+ninguna: el grafo se coloca con un Fruchterman-Reingold escrito a mano y todo se
+pinta con JavaFX. Lo unico de terceros son **dos tipografias**, incrustadas en
+`src/main/resources/com/eia/feline/ui/fonts/`:
+
+| Fuente | Uso | Licencia |
+|---|---|---|
+| Bangers | rotulos y titulos | SIL Open Font License 1.1 |
+| Fredoka | texto de interfaz | SIL Open Font License 1.1 |
+
+La OFL permite incrustarlas y redistribuirlas. El aviso esta en `fonts/OFL.txt`.
+Si faltaran, la aplicacion cae a una familia del sistema y sigue funcionando (ver
+`ui/theme/Fonts.java`).
+
+Para generar el arte de los personajes: **[`ASSETS.md`](ASSETS.md)** trae el
+prompt de cada SVG y cada PNG.
+
 ## Decisiones tomadas
 
 **DFS iterativo, con pila explicita.** El enunciado permite cuadriculas de hasta
@@ -147,8 +166,11 @@ ventana.
 
 - Las Misiones 3 y 4 corren sobre andamiaje temporal (ver arriba).
 - El arte de los personajes son figuras primitivas dibujadas en codigo
-  (`ui/fx/CatArt`), a la espera del material vectorial definitivo. Reemplazarlo no
-  exige cambios fuera de esa clase.
+  (`ui/fx/CatArt`), a la espera del material definitivo. Reemplazarlo no exige
+  cambios fuera de esa clase y de `ui/screen/Missions.java`; los prompts para
+  generarlo estan en [`ASSETS.md`](ASSETS.md).
+- JavaFX **no carga archivos SVG**. Los retratos definitivos hay que exportarlos
+  tambien a PNG, o convertir sus trazados a `SVGPath`. Explicado en `ASSETS.md`.
 - La primera compilacion necesita conexion a internet para que Maven baje JavaFX
   y JUnit. Despues funciona sin red.
 - Por encima de los topes de la seccion 2.3 no hay dibujo. La respuesta numerica
