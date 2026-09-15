@@ -67,7 +67,7 @@ estratega, tienen que resolverlas una por una.
 | Integrante | Aporte principal |
 |---|---|
 | **Juan Pablo Alzate** | Lógica de las Misiones 1 y 2 (BFS, DFS, Dijkstra) · reestructuración a Maven · interfaz gráfica, visualizadores y estilo de cómic |
-| **Jerónimo Duque** | Lógica de las Misiones 3 y 4 (Floyd-Warshall, Bellman-Ford, Kruskal con union-find) · integración de ambas en la interfaz · zoom, arrastre y paneo de los grafos · corrección del dibujo de ciclos |
+| **Jerónimo Duque Ruiz** | Lógica de las Misiones 3 y 4 (Floyd-Warshall, Bellman-Ford, Kruskal con union-find) · integración de ambas en la interfaz · zoom, arrastre y paneo de los grafos · corrección del dibujo de ciclos |
 
 El historial completo de ramas y pull requests está en el repositorio.
 
