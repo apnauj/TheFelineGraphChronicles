@@ -5,8 +5,10 @@ import com.eia.feline.missions.MissionThreeSolver;
 import com.eia.feline.ui.theme.Fonts;
 import com.eia.feline.ui.theme.Theme;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.HBox;
@@ -41,25 +43,49 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
     private final Label scoreboard = new Label();
     private final Label mismatchBanner = new Label();
     private final Label matrixLabel = new Label("MATRIZ DE FLOYD-WARSHALL  (- sin ruta, inf no acotado)");
+    private final Label graphLegend = new Label(
+            "Rueda = zoom, arrastra el fondo = mover, arrastra un nodo = reacomodar");
+    private final Button resetViewButton = new Button("Restablecer vista");
+    private final GraphCanvasInteraction interaction;
 
     private MissionThreeSolver.Case current;
     private double[] nodeX = new double[0];
     private double[] nodeY = new double[0];
     private int step;
 
+    /** true en cuanto el usuario arrastra un nodo: el proximo resize ya no debe pisarle el layout. */
+    private boolean manualLayout;
+
     public MaxWalkVisualizer() {
         scoreboard.getStyleClass().add("scoreboard");
         matrixLabel.getStyleClass().add("section-label");
+        graphLegend.getStyleClass().add("caption");
 
         mismatchBanner.getStyleClass().addAll("banner-error", "text-error");
         mismatchBanner.setWrapText(true);
         mismatchBanner.setVisible(false);
         mismatchBanner.setManaged(false);
 
+        resetViewButton.getStyleClass().addAll("button-ghost", "icon-button");
+        resetViewButton.setOnAction(e -> resetView());
+
         canvasHolder.setMinSize(0, 0);
         VBox.setVgrow(canvasHolder, Priority.ALWAYS);
         canvasHolder.widthProperty().addListener((o, a, b) -> relayout());
         canvasHolder.heightProperty().addListener((o, a, b) -> relayout());
+
+        interaction = new GraphCanvasInteraction(canvas, canvasHolder,
+                () -> nodeX, () -> nodeY,
+                () -> current == null ? 0 : current.nodes(),
+                this::nodeRadius,
+                this::repaint,
+                () -> manualLayout = true);
+
+        HBox graphHeader = new HBox(12, graphLegend, resetViewButton);
+        graphHeader.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(graphLegend, Priority.ALWAYS);
+        VBox graphColumn = new VBox(6, graphHeader, canvasHolder);
+        VBox.setVgrow(canvasHolder, Priority.ALWAYS);
 
         // La matriz va AL LADO y no debajo. Debajo se comia unos 200 px de alto y
         // al grafo le quedaba un recuadro ancho y bajo, que es la peor forma
@@ -71,12 +97,19 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
         matrixColumn.setMaxWidth(380);
         VBox.setVgrow(matrix.node(), Priority.ALWAYS);
 
-        HBox split = new HBox(12, canvasHolder, matrixColumn);
-        HBox.setHgrow(canvasHolder, Priority.ALWAYS);
+        HBox split = new HBox(12, graphColumn, matrixColumn);
+        HBox.setHgrow(graphColumn, Priority.ALWAYS);
         VBox.setVgrow(split, Priority.ALWAYS);
 
         root.setPadding(new Insets(12));
         root.getChildren().addAll(scoreboard, mismatchBanner, split);
+    }
+
+    /** Vuelve al layout automatico y al zoom/pan originales. */
+    private void resetView() {
+        manualLayout = false;
+        interaction.resetView();
+        relayout();
     }
 
     @Override
@@ -98,6 +131,8 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
     public void render(MissionThreeSolver.Case c) {
         this.current = c;
         this.step = 0;
+        this.manualLayout = false;
+        interaction.resetView();
 
         switch (c.outcome()) {
             case BLOCKED -> {
@@ -146,7 +181,7 @@ public final class MaxWalkVisualizer implements Visualizer<MissionThreeSolver.Ca
     private void relayout() {
         canvas.setWidth(Math.max(1, canvasHolder.getWidth()));
         canvas.setHeight(Math.max(1, canvasHolder.getHeight()));
-        if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1) {
+        if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1 && !manualLayout) {
             double radius = nodeRadius();
             // La separacion minima es el diametro mas sitio para la etiqueta del
             // peso: sin ella los nodos salen encimados y no se lee ni su numero.

@@ -7,6 +7,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -36,27 +37,56 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
     private final VBox root = new VBox(10);
     private final Label scoreboard = new Label();
     private final Label legend = new Label();
+    private final Button resetViewButton = new Button("Restablecer vista");
+    private final GraphCanvasInteraction interaction;
 
     private MissionTwoSolver.Case current;
     private double[] nodeX = new double[0];
     private double[] nodeY = new double[0];
     private int step;
 
+    /** true en cuanto el usuario arrastra un nodo: el proximo resize ya no debe pisarle el layout. */
+    private boolean manualLayout;
+
     public GraphVisualizer() {
         scoreboard.getStyleClass().add("scoreboard");
         legend.getStyleClass().add("caption");
-        legend.setText("Nodo resuelto = cian    Ruta mas barata = dorada    S = inicio, D = destino");
+        legend.setText("Nodo resuelto = cian    Ruta mas barata = dorada    S = inicio, D = destino"
+                + "    ·    rueda = zoom, arrastra el fondo = mover, arrastra un nodo = reacomodar");
 
-        HBox legendRow = new HBox(legend);
+        resetViewButton.getStyleClass().addAll("button-ghost", "icon-button");
+        resetViewButton.setOnAction(e -> resetView());
+
+        HBox legendRow = new HBox(12, legend, resetViewButton);
         legendRow.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(legend, Priority.ALWAYS);
 
         canvasHolder.setMinSize(0, 0);
         VBox.setVgrow(canvasHolder, Priority.ALWAYS);
         canvasHolder.widthProperty().addListener((o, a, b) -> relayout());
         canvasHolder.heightProperty().addListener((o, a, b) -> relayout());
 
+        interaction = new GraphCanvasInteraction(canvas, canvasHolder,
+                () -> nodeX, () -> nodeY,
+                () -> current == null ? 0 : current.nodes(),
+                this::currentRadius,
+                this::repaint,
+                () -> manualLayout = true);
+
         root.setPadding(new Insets(12));
         root.getChildren().addAll(scoreboard, legendRow, canvasHolder);
+    }
+
+    /** Vuelve al layout automatico y al zoom/pan originales. */
+    private void resetView() {
+        manualLayout = false;
+        interaction.resetView();
+        relayout();
+    }
+
+    /** Radio del nodo; un solo sitio porque lo necesitan el dibujo, el layout y el hit-test del arrastre. */
+    private double currentRadius() {
+        return Math.max(11, Math.min(24, 380.0 / Math.max(5, current == null ? 8 : current.nodes())));
     }
 
     @Override
@@ -78,6 +108,8 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
     public void render(MissionTwoSolver.Case c) {
         this.current = c;
         this.step = 0;
+        this.manualLayout = false;
+        interaction.resetView();
         scoreboard.setText(c.reachable()
                 ? "Costo minimo: " + c.cost()
                 : "Nina is very sad");
@@ -98,13 +130,16 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
         repaint();
     }
 
-    /** Recalcula posiciones (solo cuando cambia el caso o el tamano) y repinta. */
+    /**
+     * Recalcula posiciones (solo cuando cambia el caso o el tamano, y solo si el
+     * usuario no las arrastro a mano) y repinta.
+     */
     private void relayout() {
         canvas.setWidth(Math.max(1, canvasHolder.getWidth()));
         canvas.setHeight(Math.max(1, canvasHolder.getHeight()));
 
-        if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1) {
-            double radius = Math.max(11, Math.min(24, 380.0 / Math.max(5, current.nodes())));
+        if (current != null && canvas.getWidth() > 1 && canvas.getHeight() > 1 && !manualLayout) {
+            double radius = currentRadius();
             double[][] positions = SpringLayout.compute(
                     current.nodes(), current.edges(),
                     canvas.getWidth(), canvas.getHeight(), radius + 18, radius * 2 + 30,
@@ -130,7 +165,7 @@ public final class GraphVisualizer implements Visualizer<MissionTwoSolver.Case> 
         int[] order = current.shortestPath().settleOrder();
         for (int i = 0; i < settledShown; i++) settled[order[i]] = true;
 
-        double radius = Math.max(11, Math.min(24, 380.0 / Math.max(5, current.nodes())));
+        double radius = currentRadius();
 
         // 1. Todas las conexiones, apagadas.
         g.setLineWidth(1.4);
