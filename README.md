@@ -51,12 +51,12 @@ src/main/java/com/eia/feline/
 │   ├── grid/        GridGraph — el tablero de la Mision 1 como grafo
 │   ├── search/      BFS · DFS · SearchResult
 │   ├── sp/          Dijkstra · ShortestPathResult
-│   ├── maxwalk/     reservado para la Mision 3 (ver "Estado")
+│   ├── maxwalk/     FloydWarshall · BellmanFord — reales, Mision 3 (ver "Estado")
 │   └── mst/         reservado para la Mision 4 (ver "Estado")
 ├── missions/        texto de entrada -> lineas exactas + payload de dibujo
 │   ├── Tokenizer · InputFormatException · MissionSolver · CaseResult
 │   ├── MissionOneSolver … MissionFourSolver
-│   └── stub/        andamiaje TEMPORAL de las Misiones 3 y 4 (se borra)
+│   └── stub/        ReferenceMst: andamiaje TEMPORAL de la Mision 4 (se borra)
 └── ui/              lo unico que importa JavaFX
     ├── theme/ screen/ viz/ fx/
 ```
@@ -79,16 +79,20 @@ Los dos contratos que sostienen todo:
 |---|---|---|
 | 1 — Rescatar a Nina | BFS y DFS | terminada |
 | 2 — Las cuentas de Claude | Dijkstra | terminada |
-| 3 — El botin de churun | Floyd-Warshall y Bellman-Ford | **andamiaje temporal** |
+| 3 — El botin de churun | Floyd-Warshall y Bellman-Ford | terminada |
 | 4 — Reconectar la red | Kruskal con union-find | **andamiaje temporal** |
 
-**Para enchufar las Misiones 3 y 4 definitivas: ver [`INTEGRACION.md`](INTEGRACION.md).**
+**Para enchufar la Mision 4 definitiva: ver [`INTEGRACION.md`](INTEGRACION.md).**
 
-Las Misiones 3 y 4 funcionan de punta a punta y producen la salida correcta del
-enunciado, pero sus algoritmos viven en `missions/stub/` y son provisionales: se
-escribieron para poder construir y demostrar la interfaz mientras otro integrante
-escribe las versiones definitivas. La aplicacion lo dice en pantalla. Los paquetes
-`algo/maxwalk/` y `algo/mst/` estan vacios a proposito, reservados para ellas.
+La Mision 3 ya tiene sus algoritmos definitivos en `algo/maxwalk/`
+(`FloydWarshall`, `BellmanFord`); `MissionThreeSolver` y `ui/viz/MatrixPane` los
+usan directamente, y el aviso de andamiaje ya se quito de su pantalla. La
+Mision 4 sigue funcionando de punta a punta y produce la salida correcta del
+enunciado, pero su algoritmo vive en `missions/stub/ReferenceMst.java` y es
+provisional: se escribio para poder construir y demostrar la interfaz mientras
+se escribe la version definitiva. La aplicacion todavia lo dice en pantalla
+para la Mision 4. El paquete `algo/mst/` esta vacio a proposito, reservado
+para Kruskal.
 
 ## Recursos de terceros
 
@@ -164,7 +168,7 @@ ventana.
 
 ## Limitaciones conocidas
 
-- Las Misiones 3 y 4 corren sobre andamiaje temporal (ver arriba).
+- La Mision 4 corre sobre andamiaje temporal (ver arriba).
 - El arte de los personajes son figuras primitivas dibujadas en codigo
   (`ui/fx/CatArt`), a la espera del material definitivo. Reemplazarlo no exige
   cambios fuera de esa clase y de `ui/screen/Missions.java`; los prompts para

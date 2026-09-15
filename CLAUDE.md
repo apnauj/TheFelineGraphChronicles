@@ -14,16 +14,18 @@ in the README.
 |---|---|---|
 | 1 — Rescue Nina from the minefield | BFS + DFS on a grid | implemented |
 | 2 — Retrieve the Claude accounts | Dijkstra | implemented |
-| 3 — The ultimate food stash | Floyd-Warshall + Bellman-Ford | runs on temporary scaffolding |
+| 3 — The ultimate food stash | Floyd-Warshall + Bellman-Ford | implemented |
 | 4 — Reconnect the network | Kruskal + union-find | runs on temporary scaffolding |
 
-**Missions 3 and 4 are not finished.** They work end to end and produce the statement's expected
-output, but their algorithms live in `missions/stub/` and are placeholders written so the GUI could
-be built and demonstrated while another member writes the real ones. `algo/maxwalk/` and `algo/mst/`
-are deliberately empty and reserved for those. When they land: change the two calls in
-`MissionThreeSolver.solve` / `MissionFourSolver.solve`, delete `missions/stub/`, and flip
-`implemented` to `true` in `ui/screen/Missions.java`. No screen or visualizer changes. Do not quietly
-promote the scaffolding to `algo/` — the in-app banner and the README both say it is temporary.
+**Mission 3 is finished; Mission 4 is not.** `MissionThreeSolver.solve` calls `algo/maxwalk/FloydWarshall`
+and `algo/maxwalk/BellmanFord` directly, `ui/viz/MatrixPane` reads `FloydWarshall.NONE` for its sentinel,
+and `Missions.three()` has `implemented = true` — no stub involved anywhere for Mission 3 anymore, and
+`missions/stub/ReferenceMaxWalk` was deleted. Mission 4 still works end to end and produces the
+statement's expected output, but its algorithm lives in `missions/stub/ReferenceMst` and is a placeholder
+written so the GUI could be built and demonstrated while another member writes the real one. `algo/mst/`
+is deliberately empty and reserved for it. When it lands: change the one call in `MissionFourSolver.solve`,
+delete `missions/stub/` entirely (only `ReferenceMst` is left in it), and flip `implemented` to `true` in
+`ui/screen/Missions.java`'s `four()`. No screen or visualizer changes.
 
 ## Commands
 
@@ -52,12 +54,12 @@ algo/       pure algorithms. No JavaFX, Swing or AWT import — enforced by Algo
   grid/     GridGraph — the Mission 1 board as a graph
   search/   BFS · DFS · SearchResult
   sp/       Dijkstra · ShortestPathResult
-  maxwalk/  Mission 3 slot (empty, reserved)
+  maxwalk/  FloydWarshall · AllPairsResult · BellmanFord · MaxWalkResult — Mission 3, real
   mst/      Mission 4 slot (empty, reserved)
 
 missions/   text in → exact output lines + structured payload out. Still no UI imports.
   Tokenizer · InputFormatException · MissionSolver · CaseResult · MissionOneSolver … MissionFourSolver
-  stub/     TEMPORARY scaffolding for missions 3 and 4 — see its README
+  stub/     ReferenceMst: TEMPORARY scaffolding for mission 4 — see its README.
 
 ui/         the only package allowed to import JavaFX.
   theme/    Theme.java + theme.css — the palette, defined once in two formats
